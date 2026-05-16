@@ -12,58 +12,6 @@ export function pdfSupportedTargets(sourceExt: string): string[] {
   return sourceExt === 'pdf' ? Array.from(SUPPORTED_TARGETS) : [];
 }
 
-function installPolyfills(): void {
-  const g = globalThis as Record<string, unknown>;
-  if (typeof g.DOMMatrix === 'undefined') {
-    g.DOMMatrix = class {
-      a = 1;
-      b = 0;
-      c = 0;
-      d = 1;
-      e = 0;
-      f = 0;
-      constructor(init?: number[]) {
-        if (Array.isArray(init) && init.length === 6) {
-          [this.a, this.b, this.c, this.d, this.e, this.f] = init;
-        }
-      }
-      translateSelf(tx: number, ty = 0) {
-        this.e = this.a * tx + this.c * ty + this.e;
-        this.f = this.b * tx + this.d * ty + this.f;
-        return this;
-      }
-      scaleSelf(sx: number, sy = sx) {
-        this.a *= sx;
-        this.b *= sx;
-        this.c *= sy;
-        this.d *= sy;
-        return this;
-      }
-    };
-  }
-  if (typeof g.Path2D === 'undefined') {
-    g.Path2D = class {};
-  }
-  if (typeof g.ImageData === 'undefined') {
-    g.ImageData = class {};
-  }
-  if (typeof (Promise as { withResolvers?: unknown }).withResolvers === 'undefined') {
-    (Promise as unknown as { withResolvers: () => unknown }).withResolvers = function () {
-      let resolve: (v?: unknown) => void = () => {};
-      let reject: (e?: unknown) => void = () => {};
-      const promise = new Promise((res, rej) => {
-        resolve = res;
-        reject = rej;
-      });
-      return { promise, resolve, reject };
-    };
-  }
-  g.navigator ??= {} as Record<string, unknown>;
-  const nav = g.navigator as Record<string, unknown>;
-  nav.platform ??= '';
-  nav.userAgent ??= '';
-}
-
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -114,9 +62,9 @@ export async function convertPdf(
   job: ConversionJob,
   outputPath: string,
 ): Promise<{ uri: string; size: number }> {
-  installPolyfills();
-
-  // pdfjs-dist is large; load only when actually converting a PDF.
+  // Polyfills for DOMException/DOMMatrix/etc are installed at the app entry
+  // (src/polyfills.ts) — they need to be in place before pdfjs is evaluated
+  // by Metro, which happens at module load time, not when we call this.
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
   // Disable worker — we run pdfjs entirely on the JS thread.
   (pdfjsLib.GlobalWorkerOptions as { workerSrc: string }).workerSrc = '';
