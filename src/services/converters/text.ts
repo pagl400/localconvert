@@ -1,7 +1,4 @@
 import { File } from 'expo-file-system';
-import { marked } from 'marked';
-import TurndownService from 'turndown';
-import YAML from 'yaml';
 
 import type { ConversionJob } from '../../types/conversion';
 
@@ -12,8 +9,6 @@ interface Edge {
   to: string;
   transform: (input: string) => string | Promise<string>;
 }
-
-const turndown = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
 
 function stripTags(html: string): string {
   return html
@@ -129,21 +124,42 @@ function jsonToCsv(input: string): string {
   return `${lines.join('\n')}\n`;
 }
 
+async function mdToHtml(s: string): Promise<string> {
+  const { marked } = await import('marked');
+  return `${marked.parse(s, { async: false }) as string}\n`;
+}
+
+async function htmlToMd(s: string): Promise<string> {
+  const { default: TurndownService } = await import('turndown');
+  return `${new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' }).turndown(s)}\n`;
+}
+
+async function mdToTxt(s: string): Promise<string> {
+  const { marked } = await import('marked');
+  return `${stripTags(marked.parse(s, { async: false }) as string)}\n`;
+}
+
+async function jsonToYaml(s: string): Promise<string> {
+  const YAML = await import('yaml');
+  return `${YAML.stringify(JSON.parse(s))}`;
+}
+
+async function yamlToJson(s: string): Promise<string> {
+  const YAML = await import('yaml');
+  return `${JSON.stringify(YAML.parse(s), null, 2)}\n`;
+}
+
 const EDGES: Edge[] = [
-  { from: 'md', to: 'html', transform: (s) => `${marked.parse(s, { async: false }) as string}\n` },
-  { from: 'html', to: 'md', transform: (s) => `${turndown.turndown(s)}\n` },
+  { from: 'md', to: 'html', transform: mdToHtml },
+  { from: 'html', to: 'md', transform: htmlToMd },
   { from: 'html', to: 'txt', transform: (s) => `${stripTags(s)}\n` },
-  {
-    from: 'md',
-    to: 'txt',
-    transform: (s) => `${stripTags(marked.parse(s, { async: false }) as string)}\n`,
-  },
+  { from: 'md', to: 'txt', transform: mdToTxt },
   { from: 'txt', to: 'html', transform: txtToHtml },
   { from: 'txt', to: 'md', transform: (s) => s },
   { from: 'csv', to: 'json', transform: csvToJson },
   { from: 'json', to: 'csv', transform: jsonToCsv },
-  { from: 'json', to: 'yaml', transform: (s) => `${YAML.stringify(JSON.parse(s))}` },
-  { from: 'yaml', to: 'json', transform: (s) => `${JSON.stringify(YAML.parse(s), null, 2)}\n` },
+  { from: 'json', to: 'yaml', transform: jsonToYaml },
+  { from: 'yaml', to: 'json', transform: yamlToJson },
 ];
 
 function alias(ext: string): string {

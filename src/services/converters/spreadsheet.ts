@@ -1,5 +1,4 @@
 import { File } from 'expo-file-system';
-import * as XLSX from 'xlsx';
 
 import type { ConversionJob } from '../../types/conversion';
 
@@ -19,6 +18,8 @@ export async function convertSpreadsheet(
   job: ConversionJob,
   outputPath: string,
 ): Promise<{ uri: string; size: number }> {
+  const XLSX = await import('xlsx');
+
   const source = new File(job.source.uri);
   const bytes = await source.bytes();
   const workbook = XLSX.read(bytes, { type: 'array' });
@@ -40,7 +41,10 @@ export async function convertSpreadsheet(
       dest.write(`${JSON.stringify(rows, null, 2)}\n`);
     } else {
       const all = Object.fromEntries(
-        workbook.SheetNames.map((name) => [name, XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: null })]),
+        workbook.SheetNames.map((name) => [
+          name,
+          XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: null }),
+        ]),
       );
       dest.create();
       dest.write(`${JSON.stringify(all, null, 2)}\n`);
