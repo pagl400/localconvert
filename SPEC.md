@@ -120,17 +120,21 @@ These guarantees are documented in the app (privacy badge in the top bar), in th
 - **YAML** via `yaml`: YAML ↔ JSON.
 - **EPUB** via `jszip` + a small hand-rolled OPF parser: EPUB → TXT / MD / HTML.
 - **XML** via `fast-xml-parser`: XML ↔ JSON, plus XML ↔ YAML via the JSON edges.
-- **PDF** via `pdfjs-dist` (lazy import, worker disabled, DOMMatrix/Path2D
-  polyfilled at call time): PDF → TXT / MD / HTML / JSON.
 - All run pure JS in Expo Go — no Dev Client required.
 
-### Phase 3 — Audio, video, OCR, robust PDF (needs Dev Client)
+PDF support was attempted twice (via `unpdf` and then `pdfjs-dist` directly)
+and both paths broke down in Hermes: `unpdf` hit Metro's `exports`-map
+resolution for its bundled PDF.js subpath, and `pdfjs-dist` mandates a real
+Worker context that Expo Go can't provide. PDF therefore moves to Phase 3.
+
+### Phase 3 — PDF, audio, video, OCR (needs Dev Client)
+- **PDF** via a small Expo Module wrapping PDFKit (iOS) and PdfBox-Android
+  / iTextG (Android): real text extraction, merge / split / compress, OCR
+  for scanned PDFs.
 - **Audio** via FFmpeg (`ffmpeg-kit-react-native` or successor): MP3, WAV,
   AAC, FLAC, M4A, OGG.
 - **Video** via FFmpeg: MP4 / MOV / MKV / WebM (with resolution / bitrate
   options).
-- **Robust PDF** (scanned PDFs with OCR, write-back, merge/split with native
-  perf): native PDFKit (iOS) / PdfBox (Android) wrappers.
 - **OCR** via Tesseract for image → searchable PDF / image → text.
 - Setup steps documented in [docs/dev-client-setup.md](./docs/dev-client-setup.md).
 

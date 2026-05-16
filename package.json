@@ -30,7 +30,6 @@
     "jszip": "^3.10.1",
     "mammoth": "^1.12.0",
     "marked": "^18.0.3",
-    "pdfjs-dist": "^5.7.284",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.2",
