@@ -1,50 +1,49 @@
 ---
-title: Impressum
+title: Imprint
 layout: default
 permalink: /impressum/
 ---
 
-# Impressum
+# Imprint
 
-## Angaben gemäß § 5 TMG
+## Information under § 5 TMG (German Telemedia Act)
 
 Pascal Glöde
 Straßburger Str. 8
 58332 Schwelm
-Deutschland
+Germany
 
-## Kontakt
+## Contact
 
-E-Mail: pagl400@googlemail.com
+Email: pagl400@googlemail.com
 
-## Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
+## Responsible for content under § 18 (2) MStV
 
-Pascal Glöde, Anschrift wie oben
+Pascal Glöde, address as above.
 
-## Streitschlichtung
+## Online dispute resolution
 
-Die Europäische Kommission stellt eine Plattform zur Online-Streit­beilegung
-(OS) bereit: <https://ec.europa.eu/consumers/odr/>.
-Unsere E-Mail-Adresse finden Sie oben im Impressum.
+The European Commission provides a platform for online dispute
+resolution (ODR): <https://ec.europa.eu/consumers/odr/>.
+Our email address is listed above.
 
-Wir sind nicht bereit oder verpflichtet, an Streit­beilegungs­verfahren
-vor einer Verbraucher­schlichtungs­stelle teilzunehmen.
+We are neither willing nor obliged to participate in dispute resolution
+proceedings before a consumer arbitration board.
 
-## Haftung für Inhalte
+## Liability for content
 
-LocalConvert konvertiert Dateien ausschließlich lokal auf dem Gerät des
-Nutzers. Die App nutzt etablierte Open-Source-Bibliotheken (u. a.
-FFmpeg, libvips, Ghostscript). Für die Korrektheit der konvertierten
-Ergebnisse kann trotz sorgfältiger Auswahl der Bibliotheken keine Gewähr
-übernommen werden. Wichtige Originaldateien sollten vor einer
-Konvertierung gesichert werden.
+LocalConvert converts files exclusively on the user's device. The app
+relies on established open-source libraries (including FFmpeg, libvips
+and Ghostscript). Despite careful selection of these libraries, no
+warranty is given for the correctness of the converted output.
+Important original files should be backed up before conversion.
 
-LocalConvert ist ein reines Werkzeug und stellt **keine rechtliche,
-medizinische, steuerliche oder sonstige Fachberatung** dar.
+LocalConvert is a tool only and does not constitute **legal, medical,
+tax or any other professional advice**.
 
-## Urheberrecht
+## Copyright
 
-Der App-Code ist Eigentum von Pascal Glöde. Die in der App verwendeten
-Open-Source-Bibliotheken stehen unter ihren jeweiligen Lizenzen
-(insbesondere LGPL/GPL für FFmpeg, MIT/BSD für die übrigen) und werden
-in der App unter „Über LocalConvert“ namentlich genannt.
+The app code is the property of Pascal Glöde. The open-source libraries
+used in the app are distributed under their respective licenses
+(notably LGPL/GPL for FFmpeg, MIT/BSD for the others) and are credited
+by name in the "About LocalConvert" screen.

@@ -1,147 +1,147 @@
-# Build-Spezifikation: LocalConvert (React Native / Expo)
+# Build Specification: LocalConvert (React Native / Expo)
 
-> **Hinweis für Claude Code:** Diese Datei ist die einzige Quelle der Wahrheit für das Projekt. Lies sie vollständig, bevor du anfängst. Arbeite phasenweise, frage nach, bevor du eine Phase verlässt, und mache Git-Commits in sinnvollen Einheiten (ein Commit = ein abgeschlossener logischer Schritt, nicht ein Commit pro Datei).
-
----
-
-## 1. Projekt-Überblick
-
-**Was:** Native Mobile-App zur lokalen Konvertierung beliebiger Dateiformate.
-**Plattformen:** iOS und Android (eine Codebase via React Native + Expo).
-**Distribution:** Apple App Store und Google Play Store.
-**Monetarisierung:** Einmaliger Kaufpreis (Pricing-Tier wird später im Store festgelegt — keine Werbung). Free-Tier optional mit Limits (z. B. max. Dateigröße, kein Batch).
-**Backend:** Keines. Alle Konvertierungen finden lokal auf dem Gerät statt. Die App benötigt keine Netzwerkberechtigungen für ihre Kernfunktion.
-**Ziel-Nutzer:** Kreative, Büro-Nutzer, datenschutzbewusste Personen, Journalisten — alle, die Dateien konvertieren möchten, ohne sie irgendwo hochzuladen.
+> **Note for Claude Code:** This file is the single source of truth for the project. Read it in full before starting. Work in phases, ask before leaving a phase, and make git commits in meaningful units (one commit = one completed logical step, not one commit per file).
 
 ---
 
-## 2. Tech-Stack
+## 1. Project Overview
 
-Wenn nicht anders angegeben: jeweils aktuelle stabile Version verwenden.
+**What:** Native mobile app for converting arbitrary file formats locally.
+**Platforms:** iOS and Android (one codebase via React Native + Expo).
+**Distribution:** Apple App Store and Google Play Store.
+**Monetization:** One-time purchase (price tier to be decided in-store — no ads). An optional free tier may apply limits (e.g. max file size, no batch).
+**Backend:** None. All conversions happen on the device. The app requires no network permissions for its core function.
+**Target users:** Creators, office users, privacy-conscious people, journalists — anyone who wants to convert files without uploading them somewhere.
 
-| Komponente | Wahl | Begründung |
+---
+
+## 2. Tech Stack
+
+Use the latest stable version unless noted otherwise.
+
+| Component | Choice | Reason |
 |---|---|---|
 | Runtime | Node.js LTS (v20+) | — |
-| Framework | **Expo (Managed Workflow)** | Kein natives Setup nötig, EAS Build für Store-Builds |
-| Sprache | **TypeScript** (strict mode) | Typsicherheit, Self-Documentation |
-| Navigation | `@react-navigation/native` + native-stack + bottom-tabs | De-facto Standard |
-| State Management | **Zustand** + `zustand/middleware/persist` | Klein, kein Boilerplate, persistiert via AsyncStorage |
-| Storage | `@react-native-async-storage/async-storage` | Einstellungen und Verlauf |
-| File Picker | `expo-document-picker` | Plattform-übergreifender Picker |
-| File System | `expo-file-system` | Sandbox-Zugriff, Temp-Verzeichnis |
-| Image Picker | `expo-image-picker` (optional) | Direkter Zugriff auf Fotos |
-| Share | `expo-sharing` | Plattform-Share-Sheet als Ausgabeziel |
-| Icons | Inline-SVG via `react-native-svg` | Minimales Asset-Gewicht |
-| Datum | `date-fns` | Tree-shakeable |
-| Linting | ESLint + Prettier (Expo-Defaults) | — |
+| Framework | **Expo (managed workflow)** | No native setup needed, EAS Build for store builds |
+| Language | **TypeScript** (strict mode) | Type safety, self-documenting |
+| Navigation | `@react-navigation/native` + native-stack + bottom-tabs | De-facto standard |
+| State management | **Zustand** + `zustand/middleware/persist` | Small, no boilerplate, persists via AsyncStorage |
+| Storage | `@react-native-async-storage/async-storage` | Settings and history |
+| File picker | `expo-document-picker` | Cross-platform picker |
+| File system | `expo-file-system` | Sandbox access, temp directory |
+| Image picker | `expo-image-picker` (optional) | Direct photo access |
+| Share | `expo-sharing` | Platform share sheet as output target |
+| Icons | Inline SVG via `react-native-svg` | Minimal asset footprint |
+| Date | `date-fns` | Tree-shakeable |
+| Linting | ESLint + Prettier (Expo defaults) | — |
 
-**Konvertierungs-Engine (geplant, separate Phase):**
+**Conversion engine (planned, separate phase):**
 
-| Bibliothek | Funktion | Geplante Integration |
+| Library | Purpose | Planned integration |
 |---|---|---|
-| FFmpeg (mobile build) | Video, Audio, GIF | `ffmpeg-kit-react-native` über Expo Dev-Client |
-| libvips / Sharp-native | Bilder | Native Module mit Expo Modules API |
-| Ghostscript / PDFium | PDF-Verarbeitung | Native Bridge |
-| Pandoc / WASM-Subset | Dokumente | WASM in React Native via JSI |
-| Tesseract | OCR | `tesseract.js` oder Native |
+| FFmpeg (mobile build) | Video, audio, GIF | `ffmpeg-kit-react-native` via Expo dev client |
+| libvips / Sharp-native | Images | Native module via Expo Modules API |
+| Ghostscript / PDFium | PDF processing | Native bridge |
+| Pandoc / WASM subset | Documents | WASM in React Native via JSI |
+| Tesseract | OCR | `tesseract.js` or native |
 
-**Bewusst NICHT verwendet:**
-- Redux/MobX (Zustand reicht)
-- Axios (kein Netzwerk im Hot-Path)
-- Cloud-SDKs jeder Art (Firebase, Sentry, Amplitude …)
+**Deliberately NOT used:**
+- Redux/MobX (Zustand is enough)
+- Axios (no network in the hot path)
+- Cloud SDKs of any kind (Firebase, Sentry, Amplitude, …)
 
 ---
 
-## 3. App-Struktur
+## 3. App Structure
 
 ```
-App.tsx                 — Root + Navigation (Stack + Bottom-Tabs)
+App.tsx                 — Root + navigation (stack + bottom tabs)
 index.ts                — Expo entry
-app.json / eas.json     — Build-Konfiguration
+app.json / eas.json     — Build configuration
 src/
-  components/           — Atomare UI-Bausteine
-  screens/              — Eine Datei pro Screen
-  services/             — File-Picker, Konverter-Stub, später: native Bindings
-  store/                — Zustand-Stores (persist + ephemer)
-  theme/                — iOS-/Android-adaptive Paletten + useTheme()
-  types/                — Navigation, Conversion
-  utils/                — Format-Erkennung, Bytes/Dauer-Formatter
-docs/                   — Jekyll-Site mit Privacy / Impressum
+  components/           — Atomic UI building blocks
+  screens/              — One file per screen
+  services/             — File picker, converter stub, later: native bindings
+  store/                — Zustand stores (persisted + ephemeral)
+  theme/                — iOS/Android-adaptive palettes + useTheme()
+  types/                — Navigation, conversion
+  utils/                — Format detection, bytes/duration formatting
+docs/                   — Jekyll site with privacy / imprint
 ```
 
 ---
 
-## 4. Konvertierungspipeline
+## 4. Conversion Pipeline
 
 ```
-Eingabe-Datei (über Picker oder Share-Intent)
+Input file (via picker or share intent)
   ↓
-Format-Erkennung (Extension + MIME-Type)
+Format detection (extension + MIME type)
   ↓
-Zielformat wählen (Screen: TargetFormat)
+Pick target format (screen: TargetFormat)
   ↓
-Optionen (Qualität, Dateiname) (Screen: Options)
+Options (quality, file name) (screen: Options)
   ↓
-Konvertierung (Screen: Progress)  ← stubbed in MVP, ersetzt durch native engine
+Conversion (screen: Progress)  ← stubbed in MVP, replaced by native engine
   ↓
-Ergebnis (Screen: Result) → Share / Save / Convert another
+Result (screen: Result) → Share / Save / Convert another
 ```
 
-Der MVP enthält einen **Stub-Konverter** (`src/services/converter.ts`), der den Ablauf simuliert. Sobald die nativen Bibliotheken (FFmpeg, libvips usw.) eingebunden sind, wird `runConversion()` durch die jeweilige Engine ersetzt.
+The MVP ships a **stub converter** (`src/services/converter.ts`) that simulates the flow. Once the native libraries (FFmpeg, libvips, etc.) are wired in, `runConversion()` is replaced by the respective engine.
 
 ---
 
-## 5. Datenschutz-Garantien
+## 5. Privacy Guarantees
 
-- Keine Netzwerkanfragen für Konvertierungen.
-- Keine Analytics-SDKs.
-- Keine Werbung.
-- Keine persistente Speicherung fremder Dateien außerhalb der App-Sandbox.
-- Verlauf optional und vollständig lokal.
+- No network requests for conversions.
+- No analytics SDKs.
+- No ads.
+- No persistent storage of foreign files outside the app sandbox.
+- History is optional and fully local.
 
-Diese Garantien werden in der App (Privacy-Badge im Top-Bar), im Settings-Screen und auf der Jekyll-Site dokumentiert.
+These guarantees are documented in the app (privacy badge in the top bar), in the Settings screen, and on the Jekyll site.
 
 ---
 
 ## 6. Roadmap
 
-### Phase 1 — Shell (✅ in diesem Repo)
-- Navigation, Tabs, Screens (Convert, TargetFormat, Options, Progress, Result, History, Settings).
-- Themen-System (iOS-/Android-adaptiv, hell/dunkel/system).
-- File-Picker, Format-Routing, Share-Sheet-Ausgabe.
-- Verlauf (lokal, optional).
-- Stub-Konverter mit Fortschrittsanzeige.
+### Phase 1 — Shell (✅ in this repo)
+- Navigation, tabs, screens (Convert, TargetFormat, Options, Progress, Result, History, Settings).
+- Theme system (iOS/Android-adaptive, light/dark/system).
+- File picker, format routing, share-sheet output.
+- History (local, optional).
+- Stub converter with progress display.
 
-### Phase 2 — Bild- und Audio-Konvertierung (real)
-- libvips/Sharp-native für JPG, PNG, WebP, HEIC, GIF, TIFF.
-- FFmpeg für MP3, WAV, AAC, FLAC, M4A, OGG.
+### Phase 2 — Image and Audio Conversion (real)
+- libvips / Sharp-native for JPG, PNG, WebP, HEIC, GIF, TIFF.
+- FFmpeg for MP3, WAV, AAC, FLAC, M4A, OGG.
 
-### Phase 3 — Video & Dokumente
-- FFmpeg für MP4/MOV/MKV/WebM (mit Resolution/Bitrate-Optionen).
-- PDFium/Ghostscript für PDF-Operationen.
-- Pandoc-Subset für DOCX ↔ MD ↔ HTML ↔ TXT.
+### Phase 3 — Video & Documents
+- FFmpeg for MP4/MOV/MKV/WebM (with resolution/bitrate options).
+- PDFium/Ghostscript for PDF operations.
+- Pandoc subset for DOCX ↔ MD ↔ HTML ↔ TXT.
 
 ### Phase 4 — Power Features
-- Batch-Konvertierung.
-- Presets (z. B. „Instagram-Video“, „WhatsApp-Bild“).
-- Metadaten-Editor.
-- iOS Shortcuts / Android Intents für Automatisierung.
+- Batch conversion.
+- Presets (e.g. "Instagram Video", "WhatsApp Image").
+- Metadata editor.
+- iOS Shortcuts / Android Intents for automation.
 
 ### Phase 5 — Nice to have
-- 3D-Modelle, Schriften, Tabellen, Archive.
-- Widgets / Quick-Tiles.
+- 3D models, fonts, tables, archives.
+- Widgets / Quick Tiles.
 
 ---
 
-## 7. Konventionen
+## 7. Conventions
 
 - TypeScript strict.
 - Conventional Commits (`feat:`, `fix:`, `chore:`, …).
-- Eine Komponente / ein Screen pro Datei.
-- Keine Kommentare über das „Was“, nur über das „Warum“.
-- Keine externen Logos / Marken in der App. Eigenes Logo per Inline-SVG.
-- Theme-Werte nur aus `useTheme()`. Keine hardcoded Farben in Screens.
+- One component / one screen per file.
+- Comments explain "why", not "what".
+- No external logos / brands in the app. Own logo via inline SVG.
+- Theme values only from `useTheme()`. No hardcoded colors in screens.
 
 ---
 
-*Version 1.0 — Mai 2026*
+*Version 1.0 — May 2026*
