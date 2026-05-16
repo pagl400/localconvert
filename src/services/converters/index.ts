@@ -3,6 +3,7 @@ import { Directory, Paths } from 'expo-file-system';
 import type { ConversionJob } from '../../types/conversion';
 
 import { canHandle as canHandleImage, convertImage, imageSupportedTargets } from './image';
+import { canHandle as canHandlePdf, convertPdf, pdfSupportedTargets } from './pdf';
 import { canHandle as canHandleText, convertText, textSupportedTargets } from './text';
 
 const OUTPUT_DIR = 'output';
@@ -14,11 +15,19 @@ export function ensureOutputDir(): Directory {
 }
 
 export function isSupported(sourceExt: string, targetExt: string): boolean {
-  return canHandleImage(sourceExt, targetExt) || canHandleText(sourceExt, targetExt);
+  return (
+    canHandleImage(sourceExt, targetExt) ||
+    canHandlePdf(sourceExt, targetExt) ||
+    canHandleText(sourceExt, targetExt)
+  );
 }
 
 export function supportedTargets(sourceExt: string): Set<string> {
-  return new Set([...imageSupportedTargets(sourceExt), ...textSupportedTargets(sourceExt)]);
+  return new Set([
+    ...imageSupportedTargets(sourceExt),
+    ...pdfSupportedTargets(sourceExt),
+    ...textSupportedTargets(sourceExt),
+  ]);
 }
 
 export async function runConvert(job: ConversionJob): Promise<{ uri: string; size: number }> {
@@ -28,11 +37,14 @@ export async function runConvert(job: ConversionJob): Promise<{ uri: string; siz
   if (canHandleImage(job.source.ext, job.targetExt)) {
     return convertImage(job, outputPath);
   }
+  if (canHandlePdf(job.source.ext, job.targetExt)) {
+    return convertPdf(job, outputPath);
+  }
   if (canHandleText(job.source.ext, job.targetExt)) {
     return convertText(job, outputPath);
   }
 
   throw new Error(
-    `Converting ${job.source.ext.toUpperCase()} to ${job.targetExt.toUpperCase()} isn't available in this build yet — it needs the native engine (Phase 2). For now, try image (JPG/PNG/WebP/HEIC) or text/data (MD/HTML/TXT/CSV/JSON) conversions.`,
+    `Converting ${job.source.ext.toUpperCase()} to ${job.targetExt.toUpperCase()} isn't available in this build yet. The full conversion engine (audio, video, DOCX) is coming in a later phase and needs a development build.`,
   );
 }

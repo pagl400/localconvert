@@ -114,10 +114,11 @@ These guarantees are documented in the app (privacy badge in the top bar), in th
 - **Real text/data conversion** (MD ↔ HTML, HTML/MD → TXT, TXT → MD/HTML, JSON ↔ CSV) in pure JS via `marked` + `turndown`.
 - Unsupported pairs surface a clear error and are filtered out of the target list — no misleading fake outputs.
 
-### Phase 2 — Audio + PDF
-- FFmpeg (`ffmpeg-kit-react-native`) for MP3, WAV, AAC, FLAC, M4A, OGG.
-- Real PDF support (PDFium/Ghostscript via native module): PDF → TXT (real text extraction), PDF → DOCX, PDF merge/split/compress.
-- Requires a development build (Expo Dev Client) — Expo Go can't load these.
+### Phase 2 — PDF (✅ in this repo) + audio
+- **PDF text extraction** via `unpdf` (serverless build of PDF.js, pure JS — runs in Expo Go).
+  Supports PDF → TXT, PDF → MD, PDF → HTML, PDF → JSON (with page structure).
+- Audio (planned, needs Dev Client): FFmpeg (`ffmpeg-kit-react-native` or successor) for MP3, WAV, AAC, FLAC, M4A, OGG.
+- PDF write operations (merge / split / compress / DOCX) deferred to Phase 3 — they need PDFium/Ghostscript native.
 
 ### Phase 3 — Video & Office documents
 - FFmpeg for MP4/MOV/MKV/WebM (with resolution/bitrate options).

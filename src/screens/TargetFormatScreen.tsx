@@ -6,11 +6,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FileCard } from '../components/FileCard';
 import { FormatChip } from '../components/FormatChip';
-import { isSupported } from '../services/converters';
+import { isSupported, supportedTargets } from '../services/converters';
 import { useJobStore } from '../store/useJobStore';
 import { useTheme } from '../theme/useTheme';
 import type { RootStackParamList } from '../types/navigation';
-import { GROUP_LABEL, popularTargets, targetFormatsFor } from '../utils/formats';
+import { findFormat, GROUP_LABEL, popularTargets, targetFormatsFor } from '../utils/formats';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'TargetFormat'>;
 type RouteT = RouteProp<RootStackParamList, 'TargetFormat'>;
@@ -39,6 +39,14 @@ export function TargetFormatScreen() {
     () => (file ? popularTargets(file.format).filter((t) => isSupported(file.ext, t.ext)) : []),
     [file],
   );
+  const crossGroup = useMemo(() => {
+    if (!file) return [];
+    const sameGroupExts = new Set(targetFormatsFor(file.format).map((t) => t.ext));
+    return Array.from(supportedTargets(file.ext))
+      .filter((ext) => !sameGroupExts.has(ext) && ext !== file.ext)
+      .map((ext) => findFormat(ext))
+      .filter((f): f is NonNullable<typeof f> => f !== null);
+  }, [file]);
 
   if (!file) {
     return (
@@ -97,6 +105,16 @@ export function TargetFormatScreen() {
             </Text>
           </View>
         )}
+
+        {crossGroup.length > 0 ? (
+          <Section title="Also available" textColor={c.textSec}>
+            <View style={styles.chipRow}>
+              {crossGroup.map((t) => (
+                <FormatChip key={t.ext} label={t.label} onPress={() => pick(t.ext)} />
+              ))}
+            </View>
+          </Section>
+        ) : null}
 
         {unsupported.length > 0 ? (
           <Section title="Coming with the full engine" textColor={c.textTer}>
