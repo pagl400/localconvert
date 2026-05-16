@@ -114,19 +114,23 @@ These guarantees are documented in the app (privacy badge in the top bar), in th
 - **Real text/data conversion** (MD ↔ HTML, HTML/MD → TXT, TXT → MD/HTML, JSON ↔ CSV) in pure JS via `marked` + `turndown`.
 - Unsupported pairs surface a clear error and are filtered out of the target list — no misleading fake outputs.
 
-### Phase 2 — Office formats (✅ in this repo)
-- **PDF** via `unpdf`: PDF → TXT / MD / HTML / JSON (page-structured).
+### Phase 2 — Office formats (✅ in this repo, except PDF)
 - **DOCX** via `mammoth`: DOCX → TXT / MD / HTML.
 - **XLSX / XLS / ODS** via SheetJS: spreadsheets → CSV / JSON / HTML / XLSX.
 - **YAML** via `yaml`: YAML ↔ JSON.
 - All run pure JS in Expo Go — no Dev Client required.
-- Audio (still planned, needs Dev Client): FFmpeg (`ffmpeg-kit-react-native` or successor) for MP3, WAV, AAC, FLAC, M4A, OGG.
-- Write-back to PDF (merge/split/compress) and to DOCX deferred to Phase 3 — they need PDFium/Ghostscript or Pandoc native.
 
-### Phase 3 — Video & Office documents
-- FFmpeg for MP4/MOV/MKV/WebM (with resolution/bitrate options).
-- Pandoc subset for DOCX ↔ ODT ↔ MD ↔ HTML ↔ TXT.
-- EPUB / MOBI for e-books.
+### Phase 3 — PDF + audio/video (needs Dev Client)
+- **PDF text extraction**: deferred — `unpdf` and `pdfjs-dist` both rely on
+  features that Metro/Hermes don't load cleanly (`unpdf/pdfjs` subpath has no
+  `require` condition, pdfjs has eager worker initialization). The plan is a
+  Dev Client + a small native module wrapping Apple's PDFKit / Android's
+  PdfRenderer for text extraction. Add PDF → DOCX once that's in place.
+- **Audio** via FFmpeg (`ffmpeg-kit-react-native` or successor): MP3, WAV,
+  AAC, FLAC, M4A, OGG.
+- **Video** via FFmpeg: MP4 / MOV / MKV / WebM (with resolution / bitrate
+  options).
+- Write-back to DOCX via Pandoc native.
 
 ### Phase 4 — Power Features
 - Batch conversion.
