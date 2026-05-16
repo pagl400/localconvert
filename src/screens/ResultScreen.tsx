@@ -8,6 +8,7 @@ import { useJobStore } from '../store/useJobStore';
 import { useTheme } from '../theme/useTheme';
 import type { RootStackParamList } from '../types/navigation';
 import { formatBytes, formatDuration } from '../utils/format';
+import { findFormat } from '../utils/formats';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Result'>;
 type RouteT = RouteProp<RootStackParamList, 'Result'>;
@@ -35,7 +36,11 @@ export function ResultScreen() {
         Alert.alert('Sharing unavailable', 'Sharing is not available on this device.');
         return;
       }
-      await Sharing.shareAsync(job.outputUri!);
+      const format = findFormat(job.targetExt);
+      await Sharing.shareAsync(job.outputUri!, {
+        mimeType: format?.mime,
+        dialogTitle: 'Save converted file',
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not open share sheet.';
       Alert.alert('Sharing error', message);
