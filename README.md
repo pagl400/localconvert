@@ -9,8 +9,15 @@ See [SPEC.md](./SPEC.md) for the full build specification.
 
 ```bash
 pnpm install
-pnpm start
+
+# Custom dev client (required for audio / video / native PDF — see docs/dev-client-setup.md)
+pnpm ios       # one-time native build, then auto-reload
+pnpm android
 ```
+
+See [docs/dev-client-setup.md](./docs/dev-client-setup.md) for full
+details. The development build is **fully local** — no server, no
+upload, conversion still runs entirely on the device.
 
 ## Legal
 
