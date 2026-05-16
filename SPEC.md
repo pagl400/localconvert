@@ -114,23 +114,25 @@ These guarantees are documented in the app (privacy badge in the top bar), in th
 - **Real text/data conversion** (MD ↔ HTML, HTML/MD → TXT, TXT → MD/HTML, JSON ↔ CSV) in pure JS via `marked` + `turndown`.
 - Unsupported pairs surface a clear error and are filtered out of the target list — no misleading fake outputs.
 
-### Phase 2 — Office formats (✅ in this repo, except PDF)
+### Phase 2 — Office formats + EPUB + XML (✅ in this repo)
 - **DOCX** via `mammoth`: DOCX → TXT / MD / HTML.
 - **XLSX / XLS / ODS** via SheetJS: spreadsheets → CSV / JSON / HTML / XLSX.
 - **YAML** via `yaml`: YAML ↔ JSON.
+- **EPUB** via `jszip` + a small hand-rolled OPF parser: EPUB → TXT / MD / HTML.
+- **XML** via `fast-xml-parser`: XML ↔ JSON, plus XML ↔ YAML via the JSON edges.
+- **PDF** via `pdfjs-dist` (lazy import, worker disabled, DOMMatrix/Path2D
+  polyfilled at call time): PDF → TXT / MD / HTML / JSON.
 - All run pure JS in Expo Go — no Dev Client required.
 
-### Phase 3 — PDF + audio/video (needs Dev Client)
-- **PDF text extraction**: deferred — `unpdf` and `pdfjs-dist` both rely on
-  features that Metro/Hermes don't load cleanly (`unpdf/pdfjs` subpath has no
-  `require` condition, pdfjs has eager worker initialization). The plan is a
-  Dev Client + a small native module wrapping Apple's PDFKit / Android's
-  PdfRenderer for text extraction. Add PDF → DOCX once that's in place.
+### Phase 3 — Audio, video, OCR, robust PDF (needs Dev Client)
 - **Audio** via FFmpeg (`ffmpeg-kit-react-native` or successor): MP3, WAV,
   AAC, FLAC, M4A, OGG.
 - **Video** via FFmpeg: MP4 / MOV / MKV / WebM (with resolution / bitrate
   options).
-- Write-back to DOCX via Pandoc native.
+- **Robust PDF** (scanned PDFs with OCR, write-back, merge/split with native
+  perf): native PDFKit (iOS) / PdfBox (Android) wrappers.
+- **OCR** via Tesseract for image → searchable PDF / image → text.
+- Setup steps documented in [docs/dev-client-setup.md](./docs/dev-client-setup.md).
 
 ### Phase 4 — Power Features
 - Batch conversion.
