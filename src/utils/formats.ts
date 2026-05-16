@@ -48,8 +48,12 @@ const FORMATS: FormatInfo[] = [
   // Data
   { ext: 'csv', label: 'CSV', group: 'data', mime: 'text/csv' },
   { ext: 'json', label: 'JSON', group: 'data', mime: 'application/json' },
+  { ext: 'yaml', label: 'YAML', group: 'data', mime: 'application/yaml', description: 'Human-readable data format.' },
+  { ext: 'yml', label: 'YAML', group: 'data', mime: 'application/yaml' },
   { ext: 'xml', label: 'XML', group: 'data', mime: 'application/xml' },
   { ext: 'xlsx', label: 'XLSX', group: 'data', mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+  { ext: 'xls', label: 'XLS', group: 'data', mime: 'application/vnd.ms-excel' },
+  { ext: 'ods', label: 'ODS', group: 'data', mime: 'application/vnd.oasis.opendocument.spreadsheet' },
 
   // Archive
   { ext: 'zip', label: 'ZIP', group: 'archive', mime: 'application/zip' },

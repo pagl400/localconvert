@@ -10,7 +10,7 @@ import { isSupported, supportedTargets } from '../services/converters';
 import { useJobStore } from '../store/useJobStore';
 import { useTheme } from '../theme/useTheme';
 import type { RootStackParamList } from '../types/navigation';
-import { findFormat, GROUP_LABEL, popularTargets, targetFormatsFor } from '../utils/formats';
+import { findFormat, GROUP_LABEL, targetFormatsFor } from '../utils/formats';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'TargetFormat'>;
 type RouteT = RouteProp<RootStackParamList, 'TargetFormat'>;
@@ -35,10 +35,7 @@ export function TargetFormatScreen() {
         : [],
     [file],
   );
-  const popular = useMemo(
-    () => (file ? popularTargets(file.format).filter((t) => isSupported(file.ext, t.ext)) : []),
-    [file],
-  );
+  const popular = useMemo(() => supported.slice(0, 4), [supported]);
   const crossGroup = useMemo(() => {
     if (!file) return [];
     const sameGroupExts = new Set(targetFormatsFor(file.format).map((t) => t.ext));

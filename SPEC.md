@@ -114,11 +114,14 @@ These guarantees are documented in the app (privacy badge in the top bar), in th
 - **Real text/data conversion** (MD ↔ HTML, HTML/MD → TXT, TXT → MD/HTML, JSON ↔ CSV) in pure JS via `marked` + `turndown`.
 - Unsupported pairs surface a clear error and are filtered out of the target list — no misleading fake outputs.
 
-### Phase 2 — PDF (✅ in this repo) + audio
-- **PDF text extraction** via `unpdf` (serverless build of PDF.js, pure JS — runs in Expo Go).
-  Supports PDF → TXT, PDF → MD, PDF → HTML, PDF → JSON (with page structure).
-- Audio (planned, needs Dev Client): FFmpeg (`ffmpeg-kit-react-native` or successor) for MP3, WAV, AAC, FLAC, M4A, OGG.
-- PDF write operations (merge / split / compress / DOCX) deferred to Phase 3 — they need PDFium/Ghostscript native.
+### Phase 2 — Office formats (✅ in this repo)
+- **PDF** via `unpdf`: PDF → TXT / MD / HTML / JSON (page-structured).
+- **DOCX** via `mammoth`: DOCX → TXT / MD / HTML.
+- **XLSX / XLS / ODS** via SheetJS: spreadsheets → CSV / JSON / HTML / XLSX.
+- **YAML** via `yaml`: YAML ↔ JSON.
+- All run pure JS in Expo Go — no Dev Client required.
+- Audio (still planned, needs Dev Client): FFmpeg (`ffmpeg-kit-react-native` or successor) for MP3, WAV, AAC, FLAC, M4A, OGG.
+- Write-back to PDF (merge/split/compress) and to DOCX deferred to Phase 3 — they need PDFium/Ghostscript or Pandoc native.
 
 ### Phase 3 — Video & Office documents
 - FFmpeg for MP4/MOV/MKV/WebM (with resolution/bitrate options).

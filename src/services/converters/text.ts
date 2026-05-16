@@ -1,10 +1,11 @@
 import { File } from 'expo-file-system';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
+import YAML from 'yaml';
 
 import type { ConversionJob } from '../../types/conversion';
 
-const TEXT_EXTS = new Set(['txt', 'md', 'html', 'json', 'csv', 'xml']);
+const TEXT_EXTS = new Set(['txt', 'md', 'html', 'json', 'csv', 'xml', 'yaml', 'yml']);
 
 interface Edge {
   from: string;
@@ -141,10 +142,13 @@ const EDGES: Edge[] = [
   { from: 'txt', to: 'md', transform: (s) => s },
   { from: 'csv', to: 'json', transform: csvToJson },
   { from: 'json', to: 'csv', transform: jsonToCsv },
+  { from: 'json', to: 'yaml', transform: (s) => `${YAML.stringify(JSON.parse(s))}` },
+  { from: 'yaml', to: 'json', transform: (s) => `${JSON.stringify(YAML.parse(s), null, 2)}\n` },
 ];
 
 function alias(ext: string): string {
   if (ext === 'jpeg') return 'jpg';
+  if (ext === 'yml') return 'yaml';
   return ext;
 }
 
