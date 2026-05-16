@@ -1,16 +1,15 @@
-import { Directory, File, Paths } from 'expo-file-system';
-
 import type { ConversionJob } from '../types/conversion';
 
+import { runConvert } from './converters';
+
 /**
- * Stub converter that simulates work locally. The real engine will route to
- * FFmpeg / libvips / Ghostscript / Pandoc bindings — once those native modules
- * are wired in, replace the body with the real pipeline. Everything stays on
- * device; this module must never make a network call.
+ * Conversion runner. Drives a small synthetic progress curve so the UI feels
+ * alive, then performs the real conversion on the last tick. The actual work
+ * lives in `./converters/*` — image conversions use expo-image-manipulator,
+ * text/data conversions are pure JS. Anything outside those buckets throws a
+ * clear error instead of writing a misleading copy.
  *
- * What the stub *does* do for real: copy the source into the app cache so
- * the result screen has an actual file to share. The content isn't converted
- * yet — only the filename gets the new extension.
+ * Nothing in this module makes a network call. All work is on-device.
  */
 export interface RunHandle {
   cancel: () => void;
@@ -23,42 +22,34 @@ export interface RunCallbacks {
 }
 
 const TICK_MS = 120;
-const OUTPUT_DIR = 'output';
-
-function ensureOutputDir(): Directory {
-  const dir = new Directory(Paths.cache, OUTPUT_DIR);
-  if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
-  return dir;
-}
-
-function writeOutput(job: ConversionJob): { uri: string; size: number } {
-  const dir = ensureOutputDir();
-  const dest = new File(dir, job.outputName);
-  if (dest.exists) dest.delete();
-  const source = new File(job.source.uri);
-  source.copy(dest);
-  return { uri: dest.uri, size: dest.size };
-}
+const CONVERT_AT = 90;
 
 export function runConversion(job: ConversionJob, cb: RunCallbacks): RunHandle {
   let cancelled = false;
   let progress = 0;
-  const size = job.source.size || 1024;
-  const estimateMs = Math.min(6000, Math.max(800, size / 1024));
-  const step = (100 * TICK_MS) / estimateMs;
+  let converting = false;
+  const step = (100 * TICK_MS) / Math.min(4000, Math.max(800, job.source.size / 2048));
+
+  const finish = async () => {
+    converting = true;
+    try {
+      const out = await runConvert(job);
+      if (cancelled) return;
+      cb.onProgress(100);
+      cb.onDone(out.uri, out.size);
+    } catch (err) {
+      if (cancelled) return;
+      const message = err instanceof Error ? err.message : 'Conversion failed.';
+      cb.onError(message);
+    }
+  };
 
   const tick = () => {
-    if (cancelled) return;
-    progress = Math.min(100, progress + step);
+    if (cancelled || converting) return;
+    progress = Math.min(CONVERT_AT, progress + step);
     cb.onProgress(progress);
-    if (progress >= 100) {
-      try {
-        const out = writeOutput(job);
-        cb.onDone(out.uri, out.size);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to write output file.';
-        cb.onError(message);
-      }
+    if (progress >= CONVERT_AT) {
+      void finish();
       return;
     }
     setTimeout(tick, TICK_MS);

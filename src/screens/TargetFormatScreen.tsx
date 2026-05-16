@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FileCard } from '../components/FileCard';
 import { FormatChip } from '../components/FormatChip';
+import { isSupported } from '../services/converters';
 import { useJobStore } from '../store/useJobStore';
 import { useTheme } from '../theme/useTheme';
 import type { RootStackParamList } from '../types/navigation';
@@ -20,8 +21,24 @@ export function TargetFormatScreen() {
   const c = useTheme();
   const file = useJobStore((s) => s.files[route.params.fileId]);
 
-  const popular = useMemo(() => (file ? popularTargets(file.format) : []), [file]);
-  const all = useMemo(() => (file ? targetFormatsFor(file.format) : []), [file]);
+  const supported = useMemo(
+    () =>
+      file
+        ? targetFormatsFor(file.format).filter((t) => isSupported(file.ext, t.ext))
+        : [],
+    [file],
+  );
+  const unsupported = useMemo(
+    () =>
+      file
+        ? targetFormatsFor(file.format).filter((t) => !isSupported(file.ext, t.ext))
+        : [],
+    [file],
+  );
+  const popular = useMemo(
+    () => (file ? popularTargets(file.format).filter((t) => isSupported(file.ext, t.ext)) : []),
+    [file],
+  );
 
   if (!file) {
     return (
@@ -61,10 +78,13 @@ export function TargetFormatScreen() {
           </Section>
         ) : null}
 
-        {all.length > 0 ? (
-          <Section title={`All ${GROUP_LABEL[file.format.group].toLowerCase()} formats`} textColor={c.textSec}>
+        {supported.length > 0 ? (
+          <Section
+            title={`All ${GROUP_LABEL[file.format.group].toLowerCase()} formats`}
+            textColor={c.textSec}
+          >
             <View style={styles.chipRow}>
-              {all.map((t) => (
+              {supported.map((t) => (
                 <FormatChip key={t.ext} label={t.label} onPress={() => pick(t.ext)} />
               ))}
             </View>
@@ -72,10 +92,29 @@ export function TargetFormatScreen() {
         ) : (
           <View style={[styles.notice, { backgroundColor: c.surfaceAlt }]}>
             <Text style={[styles.noticeText, { color: c.textSec }]}>
-              No conversions available for this file type yet.
+              No conversions available for this file type in this build yet. The full engine
+              (Phase 2) will add PDF, DOCX, audio and video.
             </Text>
           </View>
         )}
+
+        {unsupported.length > 0 ? (
+          <Section title="Coming with the full engine" textColor={c.textTer}>
+            <View style={styles.chipRow}>
+              {unsupported.map((t) => (
+                <View
+                  key={t.ext}
+                  style={[styles.chipDisabled, { backgroundColor: c.surfaceAlt }]}
+                >
+                  <Text style={[styles.chipDisabledLabel, { color: c.textTer }]}>{t.label}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={[styles.hint, { color: c.textTer }]}>
+              These need native libraries (FFmpeg, Ghostscript, Pandoc) and a development build.
+            </Text>
+          </Section>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -123,4 +162,14 @@ const styles = StyleSheet.create({
   link: { fontSize: 16, fontWeight: '600' },
   notice: { padding: 14, borderRadius: 12 },
   noticeText: { fontSize: 13, lineHeight: 18 },
+  chipDisabled: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    minWidth: 56,
+    alignItems: 'center',
+    opacity: 0.6,
+  },
+  chipDisabledLabel: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4 },
+  hint: { fontSize: 11, lineHeight: 16, paddingLeft: 4 },
 });

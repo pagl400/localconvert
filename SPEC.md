@@ -105,21 +105,24 @@ These guarantees are documented in the app (privacy badge in the top bar), in th
 
 ## 6. Roadmap
 
-### Phase 1 — Shell (✅ in this repo)
+### Phase 1 — Shell + first real converters (✅ in this repo)
 - Navigation, tabs, screens (Convert, TargetFormat, Options, Progress, Result, History, Settings).
 - Theme system (iOS/Android-adaptive, light/dark/system).
 - File picker, format routing, share-sheet output.
 - History (local, optional).
-- Stub converter with progress display.
+- **Real image conversion** (JPG ↔ PNG ↔ WebP, HEIC → JPG/PNG/WebP) via `expo-image-manipulator`.
+- **Real text/data conversion** (MD ↔ HTML, HTML/MD → TXT, TXT → MD/HTML, JSON ↔ CSV) in pure JS via `marked` + `turndown`.
+- Unsupported pairs surface a clear error and are filtered out of the target list — no misleading fake outputs.
 
-### Phase 2 — Image and Audio Conversion (real)
-- libvips / Sharp-native for JPG, PNG, WebP, HEIC, GIF, TIFF.
-- FFmpeg for MP3, WAV, AAC, FLAC, M4A, OGG.
+### Phase 2 — Audio + PDF
+- FFmpeg (`ffmpeg-kit-react-native`) for MP3, WAV, AAC, FLAC, M4A, OGG.
+- Real PDF support (PDFium/Ghostscript via native module): PDF → TXT (real text extraction), PDF → DOCX, PDF merge/split/compress.
+- Requires a development build (Expo Dev Client) — Expo Go can't load these.
 
-### Phase 3 — Video & Documents
+### Phase 3 — Video & Office documents
 - FFmpeg for MP4/MOV/MKV/WebM (with resolution/bitrate options).
-- PDFium/Ghostscript for PDF operations.
-- Pandoc subset for DOCX ↔ MD ↔ HTML ↔ TXT.
+- Pandoc subset for DOCX ↔ ODT ↔ MD ↔ HTML ↔ TXT.
+- EPUB / MOBI for e-books.
 
 ### Phase 4 — Power Features
 - Batch conversion.

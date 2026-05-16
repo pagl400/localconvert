@@ -94,7 +94,9 @@ export function ProgressScreen() {
             { backgroundColor: c.surfaceAlt, opacity: pressed ? 0.7 : 1 },
           ]}
         >
-          <Text style={[styles.cancelLabel, { color: c.text }]}>Cancel</Text>
+          <Text style={[styles.cancelLabel, { color: c.text }]}>
+            {job.status === 'error' ? 'Back' : 'Cancel'}
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -109,7 +111,7 @@ const styles = StyleSheet.create({
   progressBlock: { gap: 8, marginTop: 16 },
   pct: { fontSize: 14, textAlign: 'right', fontWeight: '600' },
   note: { fontSize: 12, textAlign: 'center' },
-  error: { fontSize: 13, textAlign: 'center', marginTop: 8 },
+  error: { fontSize: 13, lineHeight: 18, textAlign: 'center', marginTop: 8, paddingHorizontal: 8 },
   cancel: { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 999, marginTop: 16 },
   cancelLabel: { fontSize: 14, fontWeight: '600' },
 });
