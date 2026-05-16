@@ -3,7 +3,9 @@ import { Directory, Paths } from 'expo-file-system';
 import type { ConversionJob } from '../../types/conversion';
 
 import { canHandle as canHandleDocx, convertDocx, docxSupportedTargets } from './docx';
+import { canHandle as canHandleEpub, convertEpub, epubSupportedTargets } from './epub';
 import { canHandle as canHandleImage, convertImage, imageSupportedTargets } from './image';
+import { canHandle as canHandlePdf, convertPdf, pdfSupportedTargets } from './pdf';
 import {
   canHandle as canHandleSpreadsheet,
   convertSpreadsheet,
@@ -22,7 +24,9 @@ export function ensureOutputDir(): Directory {
 export function isSupported(sourceExt: string, targetExt: string): boolean {
   return (
     canHandleImage(sourceExt, targetExt) ||
+    canHandlePdf(sourceExt, targetExt) ||
     canHandleDocx(sourceExt, targetExt) ||
+    canHandleEpub(sourceExt, targetExt) ||
     canHandleSpreadsheet(sourceExt, targetExt) ||
     canHandleText(sourceExt, targetExt)
   );
@@ -31,7 +35,9 @@ export function isSupported(sourceExt: string, targetExt: string): boolean {
 export function supportedTargets(sourceExt: string): Set<string> {
   return new Set([
     ...imageSupportedTargets(sourceExt),
+    ...pdfSupportedTargets(sourceExt),
     ...docxSupportedTargets(sourceExt),
+    ...epubSupportedTargets(sourceExt),
     ...spreadsheetSupportedTargets(sourceExt),
     ...textSupportedTargets(sourceExt),
   ]);
@@ -44,8 +50,14 @@ export async function runConvert(job: ConversionJob): Promise<{ uri: string; siz
   if (canHandleImage(job.source.ext, job.targetExt)) {
     return convertImage(job, outputPath);
   }
+  if (canHandlePdf(job.source.ext, job.targetExt)) {
+    return convertPdf(job, outputPath);
+  }
   if (canHandleDocx(job.source.ext, job.targetExt)) {
     return convertDocx(job, outputPath);
+  }
+  if (canHandleEpub(job.source.ext, job.targetExt)) {
+    return convertEpub(job, outputPath);
   }
   if (canHandleSpreadsheet(job.source.ext, job.targetExt)) {
     return convertSpreadsheet(job, outputPath);
@@ -55,6 +67,6 @@ export async function runConvert(job: ConversionJob): Promise<{ uri: string; siz
   }
 
   throw new Error(
-    `Converting ${job.source.ext.toUpperCase()} to ${job.targetExt.toUpperCase()} isn't available in this build yet. PDF text extraction, audio, video, and write-back to DOCX/PDF need the native engine (Phase 3 — requires a development build).`,
+    `Converting ${job.source.ext.toUpperCase()} to ${job.targetExt.toUpperCase()} isn't available in this build yet. Audio and video need the native engine — requires a development build.`,
   );
 }

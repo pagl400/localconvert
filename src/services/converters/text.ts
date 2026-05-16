@@ -149,6 +149,20 @@ async function yamlToJson(s: string): Promise<string> {
   return `${JSON.stringify(YAML.parse(s), null, 2)}\n`;
 }
 
+async function jsonToXml(s: string): Promise<string> {
+  const { XMLBuilder } = await import('fast-xml-parser');
+  const data = JSON.parse(s);
+  const root = Array.isArray(data) ? { items: { item: data } } : data;
+  const builder = new XMLBuilder({ format: true, indentBy: '  ' });
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(root)}`;
+}
+
+async function xmlToJson(s: string): Promise<string> {
+  const { XMLParser } = await import('fast-xml-parser');
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' });
+  return `${JSON.stringify(parser.parse(s), null, 2)}\n`;
+}
+
 const EDGES: Edge[] = [
   { from: 'md', to: 'html', transform: mdToHtml },
   { from: 'html', to: 'md', transform: htmlToMd },
@@ -160,6 +174,10 @@ const EDGES: Edge[] = [
   { from: 'json', to: 'csv', transform: jsonToCsv },
   { from: 'json', to: 'yaml', transform: jsonToYaml },
   { from: 'yaml', to: 'json', transform: yamlToJson },
+  { from: 'json', to: 'xml', transform: jsonToXml },
+  { from: 'xml', to: 'json', transform: xmlToJson },
+  { from: 'yaml', to: 'xml', transform: async (s) => jsonToXml(await yamlToJson(s)) },
+  { from: 'xml', to: 'yaml', transform: async (s) => jsonToYaml(await xmlToJson(s)) },
 ];
 
 function alias(ext: string): string {
