@@ -1,0 +1,10 @@
+title: LocalConvert
+description: Universal on-device file converter for iOS and Android — privacy-first, no cloud, no tracking, no ads.
+theme: jekyll-theme-minimal
+
+permalink: /:basename/
+
+include:
+  - privacy.md
+  - impressum.md
+  - index.md

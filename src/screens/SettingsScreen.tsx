@@ -1,0 +1,224 @@
+import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { APP_VERSION, IMPRINT_URL, PRIVACY_URL, SOURCE_URL } from '../constants';
+import { useAppStore, type Theme } from '../store/useAppStore';
+import { useTheme } from '../theme/useTheme';
+import type { Quality } from '../types/conversion';
+
+const THEME_OPTIONS: { value: Theme; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
+const QUALITY_OPTIONS: { value: Quality; label: string }[] = [
+  { value: 'fast', label: 'Fast' },
+  { value: 'high', label: 'High' },
+  { value: 'max', label: 'Maximum' },
+];
+
+export function SettingsScreen() {
+  const c = useTheme();
+  const theme = useAppStore((s) => s.theme);
+  const setTheme = useAppStore((s) => s.setTheme);
+  const defaultQuality = useAppStore((s) => s.defaultQuality);
+  const setDefaultQuality = useAppStore((s) => s.setDefaultQuality);
+  const keepHistory = useAppStore((s) => s.keepHistory);
+  const setKeepHistory = useAppStore((s) => s.setKeepHistory);
+  const autoCleanTemp = useAppStore((s) => s.autoCleanTemp);
+  const setAutoCleanTemp = useAppStore((s) => s.setAutoCleanTemp);
+
+  return (
+    <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]} edges={['top', 'left', 'right']}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: c.text }]}>Settings</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content}>
+        <Section title="Appearance" textColor={c.textSec}>
+          <Segmented options={THEME_OPTIONS} value={theme} onChange={setTheme} palette={c} />
+        </Section>
+
+        <Section title="Default quality" textColor={c.textSec}>
+          <Segmented
+            options={QUALITY_OPTIONS}
+            value={defaultQuality}
+            onChange={setDefaultQuality}
+            palette={c}
+          />
+        </Section>
+
+        <Section title="Privacy" textColor={c.textSec}>
+          <ToggleRow
+            label="Keep conversion history"
+            value={keepHistory}
+            onChange={setKeepHistory}
+            palette={c}
+          />
+          <ToggleRow
+            label="Auto-clean temp files after export"
+            value={autoCleanTemp}
+            onChange={setAutoCleanTemp}
+            palette={c}
+          />
+        </Section>
+
+        <Section title="About" textColor={c.textSec}>
+          <Row
+            label="Version"
+            value={APP_VERSION}
+            palette={c}
+          />
+          <LinkRow label="Privacy policy" url={PRIVACY_URL} palette={c} />
+          <LinkRow label="Impressum" url={IMPRINT_URL} palette={c} />
+          <LinkRow label="Source on GitHub" url={SOURCE_URL} palette={c} />
+        </Section>
+
+        <Text style={[styles.foot, { color: c.textSec }]}>
+          LocalConvert never connects to the internet for conversions. All work happens on this device.
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+interface SectionProps {
+  title: string;
+  textColor: string;
+  children: React.ReactNode;
+}
+
+function Section({ title, textColor, children }: SectionProps) {
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: textColor }]}>{title}</Text>
+      <View style={styles.sectionBody}>{children}</View>
+    </View>
+  );
+}
+
+interface SegmentedProps<T extends string> {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+  palette: ReturnType<typeof useTheme>;
+}
+
+function Segmented<T extends string>({ options, value, onChange, palette }: SegmentedProps<T>) {
+  return (
+    <View style={[styles.segmented, { backgroundColor: palette.surfaceAlt }]}>
+      {options.map((opt) => {
+        const active = opt.value === value;
+        return (
+          <Pressable
+            key={opt.value}
+            style={[styles.segment, active && { backgroundColor: palette.surface }]}
+            onPress={() => onChange(opt.value)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+          >
+            <Text
+              style={[
+                styles.segmentLabel,
+                {
+                  color: active ? palette.text : palette.textSec,
+                  fontWeight: active ? '600' : '500',
+                },
+              ]}
+            >
+              {opt.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+interface ToggleRowProps {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  palette: ReturnType<typeof useTheme>;
+}
+
+function ToggleRow({ label, value, onChange, palette }: ToggleRowProps) {
+  return (
+    <View style={[styles.row, { backgroundColor: palette.surfaceAlt }]}>
+      <Text style={[styles.rowLabel, { color: palette.text }]}>{label}</Text>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ true: palette.accent, false: palette.surfaceHi }}
+      />
+    </View>
+  );
+}
+
+interface RowProps {
+  label: string;
+  value: string;
+  palette: ReturnType<typeof useTheme>;
+}
+
+function Row({ label, value, palette }: RowProps) {
+  return (
+    <View style={[styles.row, { backgroundColor: palette.surfaceAlt }]}>
+      <Text style={[styles.rowLabel, { color: palette.text }]}>{label}</Text>
+      <Text style={[styles.rowValue, { color: palette.textSec }]}>{value}</Text>
+    </View>
+  );
+}
+
+interface LinkRowProps {
+  label: string;
+  url: string;
+  palette: ReturnType<typeof useTheme>;
+}
+
+function LinkRow({ label, url, palette }: LinkRowProps) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.row,
+        { backgroundColor: pressed ? palette.surfaceHi : palette.surfaceAlt },
+      ]}
+      onPress={() => {
+        void Linking.openURL(url);
+      }}
+    >
+      <Text style={[styles.rowLabel, { color: palette.text }]}>{label}</Text>
+      <Text style={[styles.rowValue, { color: palette.accent }]}>Open</Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
+  title: { fontSize: 22, fontWeight: '700' },
+  content: { paddingHorizontal: 16, paddingBottom: 32, gap: 24 },
+  section: { gap: 8 },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    paddingLeft: 8,
+    letterSpacing: 0.6,
+  },
+  sectionBody: { borderRadius: 12, overflow: 'hidden', gap: 1 },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  rowLabel: { fontSize: 16 },
+  rowValue: { fontSize: 14 },
+  segmented: { flexDirection: 'row', borderRadius: 10, padding: 4, gap: 4 },
+  segment: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
+  segmentLabel: { fontSize: 14 },
+  foot: { fontSize: 12, textAlign: 'center', paddingHorizontal: 16, lineHeight: 18 },
+});
