@@ -127,16 +127,21 @@ and both paths broke down in Hermes: `unpdf` hit Metro's `exports`-map
 resolution for its bundled PDF.js subpath, and `pdfjs-dist` mandates a real
 Worker context that Expo Go can't provide. PDF therefore moves to Phase 3.
 
-### Phase 3 — PDF, audio, video, OCR (needs Dev Client)
-- **PDF** via a small Expo Module wrapping PDFKit (iOS) and PdfBox-Android
-  / iTextG (Android): real text extraction, merge / split / compress, OCR
-  for scanned PDFs.
-- **Audio** via FFmpeg (`ffmpeg-kit-react-native` or successor): MP3, WAV,
-  AAC, FLAC, M4A, OGG.
-- **Video** via FFmpeg: MP4 / MOV / MKV / WebM (with resolution / bitrate
-  options).
-- **OCR** via Tesseract for image → searchable PDF / image → text.
+### Phase 3 — PDF, audio, video (in repo, needs Dev Client to build)
+- **Audio** via `ffmpeg-kit-react-native`: MP3, WAV, AAC, FLAC, M4A, OGG,
+  OPUS, AIFF — with quality presets that map to bitrate/CRF.
+- **Video** via `ffmpeg-kit-react-native`: MP4, MOV, MKV, WebM, AVI, GIF,
+  plus audio extraction (video → MP3/WAV/AAC/M4A).
+- **PDF** via a local Expo Module (`modules/expo-pdf-text`) wrapping
+  iOS PDFKit for text extraction → TXT / MD / HTML / JSON.
+  Android falls back to a clear error until PdfBox-Android is wired.
 - Setup steps documented in [docs/dev-client-setup.md](./docs/dev-client-setup.md).
+
+### Phase 4 — Nice-to-haves
+- **OCR** via Tesseract for scanned PDFs / images → text.
+- **PDF write-back** (merge/split/compress) once a robust native lib is
+  picked.
+- **Android PDF text** via PdfBox-Android.
 
 ### Phase 4 — Power Features
 - Batch conversion.
