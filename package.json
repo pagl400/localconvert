@@ -30,7 +30,6 @@
     "expo-status-bar": "~3.0.9",
     "expo-updates": "~29.0.17",
     "fast-xml-parser": "^5.8.0",
-    "ffmpeg-kit-react-native": "^6.0.2",
     "jszip": "^3.10.1",
     "mammoth": "^1.12.0",
     "marked": "^18.0.3",
@@ -54,7 +53,9 @@
   "private": true,
   "expo": {
     "autolinking": {
-      "searchPaths": ["modules"]
+      "searchPaths": [
+        "modules"
+      ]
     }
   },
   "pnpm": {

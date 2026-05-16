@@ -127,21 +127,34 @@ and both paths broke down in Hermes: `unpdf` hit Metro's `exports`-map
 resolution for its bundled PDF.js subpath, and `pdfjs-dist` mandates a real
 Worker context that Expo Go can't provide. PDF therefore moves to Phase 3.
 
-### Phase 3 — PDF, audio, video (in repo, needs Dev Client to build)
-- **Audio** via `ffmpeg-kit-react-native`: MP3, WAV, AAC, FLAC, M4A, OGG,
-  OPUS, AIFF — with quality presets that map to bitrate/CRF.
-- **Video** via `ffmpeg-kit-react-native`: MP4, MOV, MKV, WebM, AVI, GIF,
-  plus audio extraction (video → MP3/WAV/AAC/M4A).
-- **PDF** via a local Expo Module (`modules/expo-pdf-text`) wrapping
-  iOS PDFKit for text extraction → TXT / MD / HTML / JSON.
-  Android falls back to a clear error until PdfBox-Android is wired.
-- Setup steps documented in [docs/dev-client-setup.md](./docs/dev-client-setup.md).
+### Phase 3 — PDF + native audio/video (in repo, needs Dev Client)
+Two local Expo Modules under `modules/`:
+
+- **`modules/expo-pdf-text`** — wraps iOS PDFKit (`PDFDocument.string`)
+  for text extraction. Android stubs out cleanly until PdfBox-Android
+  is wired. JS side: `pdf.ts` produces TXT / MD / HTML / JSON outputs.
+- **`modules/expo-media-convert`** — wraps Apple AVFoundation:
+  - `AVAssetReader` + `AVAssetWriter` for audio conversion to **M4A
+    (AAC), WAV, AIFF, CAF**. Sources: MP3, WAV, FLAC, AAC, OGG, M4A,
+    OPUS, AIFF (iOS' CoreAudio can read these).
+  - `AVAssetExportSession` for video conversion to **MP4, MOV, M4V**,
+    plus audio extraction from any video to the audio targets above.
+
+The scope is narrower than FFmpeg (iOS can't encode MP3/FLAC/OGG/OPUS
+out of the box and only writes a small set of video containers), but
+it ships with the OS, has no third-party CDN dependency, and is
+licensed under Apple's own terms. FFmpeg's archived binaries can no
+longer be downloaded reliably, so the AVFoundation route is the more
+durable choice.
 
 ### Phase 4 — Nice-to-haves
+- **FFmpeg fallback** (community fork) for the remaining audio/video
+  encoder gaps (MP3 / FLAC / OGG / OPUS / MKV / WebM / GIF).
 - **OCR** via Tesseract for scanned PDFs / images → text.
 - **PDF write-back** (merge/split/compress) once a robust native lib is
   picked.
 - **Android PDF text** via PdfBox-Android.
+- **Android audio/video** via MediaCodec wrappers.
 
 ### Phase 4 — Power Features
 - Batch conversion.

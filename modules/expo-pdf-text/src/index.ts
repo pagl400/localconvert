@@ -1,4 +1,4 @@
-import { requireNativeModule, NativeModule } from 'expo';
+import { requireNativeModule, NativeModule as ExpoNativeModule } from 'expo';
 
 interface ExtractedPage {
   page: number;
@@ -11,7 +11,7 @@ interface ExtractResult {
   pages: ExtractedPage[];
 }
 
-interface ExpoPdfTextModuleType extends NativeModule {
+interface ExpoPdfTextModuleType extends ExpoNativeModule {
   extractText(uri: string): Promise<ExtractResult>;
 }
 
