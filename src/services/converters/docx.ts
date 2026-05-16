@@ -1,5 +1,8 @@
 import { File } from 'expo-file-system';
-import mammoth from 'mammoth';
+// Mammoth's main entry pulls in Node-flavoured modules (bluebird, buffer). The
+// `mammoth.browser.js` ships everything self-contained and runs in any JS env.
+// @ts-expect-error - no types for the browser bundle, surface is the same as 'mammoth'.
+import mammoth from 'mammoth/mammoth.browser.js';
 import TurndownService from 'turndown';
 
 import type { ConversionJob } from '../../types/conversion';
