@@ -57,6 +57,7 @@ export function OptionsScreen() {
       source: file,
       targetExt: targetFormat.ext,
       quality,
+      variant: route.params.variant,
       outputName: `${name || 'output'}.${targetFormat.ext}`,
       status: 'pending',
       progress: 0,
@@ -69,6 +70,13 @@ export function OptionsScreen() {
     startJob(job);
     navigation.replace('Progress', { jobId: job.id });
   };
+
+  const variantLabel =
+    route.params.variant === 'styled'
+      ? ' — full styling (colors, fonts, highlights)'
+      : route.params.variant === 'plain'
+      ? ' — clean semantic HTML'
+      : '';
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]} edges={['top', 'left', 'right']}>
@@ -84,6 +92,7 @@ export function OptionsScreen() {
         <View style={[styles.heading, { backgroundColor: c.surfaceAlt }]}>
           <Text style={[styles.headingText, { color: c.text }]}>
             {file.format.label} → {targetFormat.label}
+            {variantLabel}
           </Text>
           {targetFormat.description ? (
             <Text style={[styles.headingSub, { color: c.textSec }]}>{targetFormat.description}</Text>

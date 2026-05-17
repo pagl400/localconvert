@@ -58,8 +58,13 @@ export function TargetFormatScreen() {
     );
   }
 
-  const pick = (ext: string) =>
-    navigation.navigate('Options', { fileId: file.id, targetFormat: ext });
+  const pick = (ext: string, variant?: 'plain' | 'styled') =>
+    navigation.navigate('Options', { fileId: file.id, targetFormat: ext, variant });
+
+  // DOCX → HTML supports two variants: "plain" (semantic) and "styled" (full
+  // visual fidelity). Surface both as separate cards so the user picks once
+  // here and doesn't see an extra option screen.
+  const showDocxHtmlVariants = file.ext === 'docx';
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]} edges={['top', 'left', 'right']}>
@@ -76,9 +81,16 @@ export function TargetFormatScreen() {
         {popular.length > 0 ? (
           <Section title="Popular" textColor={c.textSec}>
             <View style={styles.chipRow}>
-              {popular.map((t) => (
-                <FormatChip key={t.ext} label={t.label} onPress={() => pick(t.ext)} />
-              ))}
+              {popular.map((t) =>
+                showDocxHtmlVariants && t.ext === 'html' ? (
+                  <View key="html-variants" style={styles.chipRow}>
+                    <FormatChip label="HTML (clean)" onPress={() => pick('html', 'plain')} />
+                    <FormatChip label="HTML (styled)" onPress={() => pick('html', 'styled')} />
+                  </View>
+                ) : (
+                  <FormatChip key={t.ext} label={t.label} onPress={() => pick(t.ext)} />
+                ),
+              )}
             </View>
           </Section>
         ) : null}
@@ -89,9 +101,16 @@ export function TargetFormatScreen() {
             textColor={c.textSec}
           >
             <View style={styles.chipRow}>
-              {supported.map((t) => (
-                <FormatChip key={t.ext} label={t.label} onPress={() => pick(t.ext)} />
-              ))}
+              {supported.map((t) =>
+                showDocxHtmlVariants && t.ext === 'html' ? (
+                  <View key="html-variants-all" style={styles.chipRow}>
+                    <FormatChip label="HTML (clean)" onPress={() => pick('html', 'plain')} />
+                    <FormatChip label="HTML (styled)" onPress={() => pick('html', 'styled')} />
+                  </View>
+                ) : (
+                  <FormatChip key={t.ext} label={t.label} onPress={() => pick(t.ext)} />
+                ),
+              )}
             </View>
           </Section>
         ) : (

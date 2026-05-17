@@ -8,7 +8,7 @@ class ExpoPdfTextModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("ExpoPdfText")
 
-    AsyncFunction("extractText") { _: String ->
+    AsyncFunction("extractText") { _: String, _: Boolean ->
       // Android lacks a native text-extraction API on PdfRenderer. A real
       // implementation can drop in iText / PdfBox-Android here. For now we
       // surface a clear error so the UI shows the right message.

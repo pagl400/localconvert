@@ -1,7 +1,7 @@
 export type RootStackParamList = {
   Tabs: undefined;
   TargetFormat: { fileId: string };
-  Options: { fileId: string; targetFormat: string };
+  Options: { fileId: string; targetFormat: string; variant?: 'plain' | 'styled' };
   Progress: { jobId: string };
   Result: { jobId: string };
 };

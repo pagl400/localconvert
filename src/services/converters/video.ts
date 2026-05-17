@@ -13,7 +13,7 @@ const SUPPORTED_SOURCES = new Set([
 // AVAssetExportSession output options. Audio extraction also supported, but
 // only into formats that the audio path supports.
 const VIDEO_TARGETS = new Set(['mp4', 'mov', 'm4v']);
-const AUDIO_FROM_VIDEO_TARGETS = new Set(['m4a', 'aac', 'wav', 'aiff', 'caf']);
+const AUDIO_FROM_VIDEO_TARGETS = new Set(['m4a', 'wav', 'aiff', 'caf']);
 
 export function canHandle(sourceExt: string, targetExt: string): boolean {
   if (Platform.OS !== 'ios') return false;

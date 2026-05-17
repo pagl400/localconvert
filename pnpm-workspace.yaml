@@ -1,4 +1,5 @@
 allowBuilds:
+  dtrace-provider: true
   unrs-resolver: true
 nodeLinker: hoisted
 overrides:

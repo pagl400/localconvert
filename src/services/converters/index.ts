@@ -5,7 +5,18 @@ import type { ConversionJob } from '../../types/conversion';
 import { canHandle as canHandleAudio, convertAudio, audioSupportedTargets } from './audio';
 import { canHandle as canHandleDocx, convertDocx, docxSupportedTargets } from './docx';
 import { canHandle as canHandleEpub, convertEpub, epubSupportedTargets } from './epub';
+import {
+  canHandle as canHandleHtmlToPdf,
+  convertToPdf,
+  htmlToPdfSupportedTargets,
+} from './htmlToPdf';
 import { canHandle as canHandleImage, convertImage, imageSupportedTargets } from './image';
+import {
+  canHandle as canHandleImageToPdf,
+  convertImageToPdf,
+  imageToPdfSupportedTargets,
+} from './imageToPdf';
+import { canHandle as canHandleOdt, convertOdt, odtSupportedTargets } from './odt';
 import { canHandle as canHandlePdf, convertPdf, pdfSupportedTargets } from './pdf';
 import {
   canHandle as canHandleSpreadsheet,
@@ -25,6 +36,9 @@ export function ensureOutputDir(): Directory {
 
 export function isSupported(sourceExt: string, targetExt: string): boolean {
   return (
+    canHandleImageToPdf(sourceExt, targetExt) ||
+    canHandleHtmlToPdf(sourceExt, targetExt) ||
+    canHandleOdt(sourceExt, targetExt) ||
     canHandleImage(sourceExt, targetExt) ||
     canHandlePdf(sourceExt, targetExt) ||
     canHandleDocx(sourceExt, targetExt) ||
@@ -38,6 +52,9 @@ export function isSupported(sourceExt: string, targetExt: string): boolean {
 
 export function supportedTargets(sourceExt: string): Set<string> {
   return new Set([
+    ...imageToPdfSupportedTargets(sourceExt),
+    ...htmlToPdfSupportedTargets(sourceExt),
+    ...odtSupportedTargets(sourceExt),
     ...imageSupportedTargets(sourceExt),
     ...pdfSupportedTargets(sourceExt),
     ...docxSupportedTargets(sourceExt),
@@ -53,6 +70,15 @@ export async function runConvert(job: ConversionJob): Promise<{ uri: string; siz
   const dir = ensureOutputDir();
   const outputPath = `${dir.uri}${job.outputName}`;
 
+  // Order matters: image→pdf and html→pdf must run before the generic image/
+  // docx/etc. handlers, so .jpg→.pdf, .docx→.pdf, .md→.pdf route here instead
+  // of the older text-only paths.
+  if (canHandleImageToPdf(job.source.ext, job.targetExt))
+    return convertImageToPdf(job, outputPath);
+  if (canHandleHtmlToPdf(job.source.ext, job.targetExt)) return convertToPdf(job, outputPath);
+  // ODT bridge runs before the legacy DOCX handler so docx→odt and odt→docx
+  // go through the bidirectional path instead of falling back to text-only.
+  if (canHandleOdt(job.source.ext, job.targetExt)) return convertOdt(job, outputPath);
   if (canHandleImage(job.source.ext, job.targetExt)) return convertImage(job, outputPath);
   if (canHandlePdf(job.source.ext, job.targetExt)) return convertPdf(job, outputPath);
   if (canHandleDocx(job.source.ext, job.targetExt)) return convertDocx(job, outputPath);

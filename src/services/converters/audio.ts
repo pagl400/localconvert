@@ -7,7 +7,8 @@ import type { ConversionJob } from '../../types/conversion';
 const SUPPORTED_SOURCES = new Set(['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'opus', 'aiff', 'aif']);
 // AVFoundation on iOS can write these. MP3/FLAC/OGG/OPUS encoding is not in
 // iOS' built-in encoder set, so we deliberately don't advertise them.
-const SUPPORTED_TARGETS = new Set(['m4a', 'aac', 'wav', 'aiff', 'caf']);
+// Note: raw ADTS (.aac) isn't an AVFileType — AAC ships inside .m4a here.
+const SUPPORTED_TARGETS = new Set(['m4a', 'wav', 'aiff', 'caf']);
 
 export function canHandle(sourceExt: string, targetExt: string): boolean {
   if (Platform.OS !== 'ios') return false;

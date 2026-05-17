@@ -23,7 +23,10 @@
           {
             "CFBundleTypeName": "All files",
             "LSHandlerRank": "Alternate",
-            "LSItemContentTypes": ["public.data", "public.content"]
+            "LSItemContentTypes": [
+              "public.data",
+              "public.content"
+            ]
           }
         ]
       },
@@ -40,13 +43,25 @@
       "intentFilters": [
         {
           "action": "SEND",
-          "category": ["DEFAULT"],
-          "data": [{ "mimeType": "*/*" }]
+          "category": [
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "mimeType": "*/*"
+            }
+          ]
         },
         {
           "action": "SEND_MULTIPLE",
-          "category": ["DEFAULT"],
-          "data": [{ "mimeType": "*/*" }]
+          "category": [
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "mimeType": "*/*"
+            }
+          ]
         }
       ],
       "versionCode": 1
@@ -57,6 +72,11 @@
     "owner": "pagl400",
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "414fbe0d-fee3-4020-acf6-feb1de679530"
+      }
     }
   }
 }

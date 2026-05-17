@@ -30,11 +30,19 @@ export interface SelectedFile {
 
 export type Quality = 'fast' | 'high' | 'max';
 
+// Variants distinguish multiple ways the same source→target conversion can be
+// produced. Right now the only multi-variant edge is DOCX → HTML:
+//   - 'plain'  : clean semantic HTML via mammoth (small, accessibility-friendly)
+//   - 'styled' : full visual fidelity (colors, highlights, fonts, borders, …)
+// Other converters ignore this field.
+export type ConversionVariant = 'plain' | 'styled';
+
 export interface ConversionJob {
   id: string;
   source: SelectedFile;
   targetExt: string;
   quality: Quality;
+  variant?: ConversionVariant;
   outputName: string;
   status: 'pending' | 'running' | 'done' | 'error';
   progress: number;
