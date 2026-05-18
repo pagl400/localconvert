@@ -33,6 +33,11 @@ export function kindFor(sourceExt: string, targetExt: string, variant?: string):
   if (VIDEO_SOURCES.has(sourceExt)) {
     if (VIDEO_TARGETS.has(targetExt)) return 'video';
     if (targetExt === GIF_TARGET) return 'gif';
+    // MP3 needs the full audio panel (bitrate / sample rate / channels / trim)
+    // because LAME exposes all of those; the simple Quality buttons aren't
+    // enough. Other audio extractions stay on the lightweight audio-extract
+    // kind since AVFoundation just transcodes to the target container.
+    if (targetExt === 'mp3') return 'audio';
     if (AUDIO_FROM_VIDEO_TARGETS.has(targetExt)) return 'audio-extract';
   }
   if (AUDIO_SOURCES.has(sourceExt) && AUDIO_FROM_VIDEO_TARGETS.has(targetExt)) return 'audio';

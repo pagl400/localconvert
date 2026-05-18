@@ -99,6 +99,7 @@ export async function convertVideo(
       bitrateKbps: a?.bitrate ?? 192,
       sampleRate: a?.sampleRate,
       channels: a?.channels,
+      quality: a?.mp3EncoderQuality,
       trimStartSec: a?.trimStartSec,
       trimEndSec: a?.trimEndSec,
     });

@@ -82,10 +82,13 @@ export interface GifOptions {
 }
 
 export interface AudioOptions {
-  bitrate?: number;     // kbps for AAC/M4A
+  bitrate?: number;     // kbps for AAC/M4A/MP3
   sampleRate?: number;  // 16000 / 22050 / 32000 / 44100 / 48000
   channels?: number;    // 1 (mono) or 2 (stereo)
   bitDepth?: number;    // 16 / 24 / 32 for WAV / AIFF / CAF
+  // MP3 only: LAME psychoacoustic-model quality. 0 = best (slow), 9 = fast.
+  // The UI picker maps "Beste / Standard / Schnell" → 0 / 2 / 5.
+  mp3EncoderQuality?: number;
   trimStartSec?: number;
   trimEndSec?: number;
 }

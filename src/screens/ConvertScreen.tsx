@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DropZone } from '../components/DropZone';
 import { Logo } from '../components/Logo';
 import { PrivacyBadge } from '../components/PrivacyBadge';
-import { pickFile } from '../services/filePicker';
+import { pickFile, pickFromPhotos } from '../services/filePicker';
 import { useAppStore } from '../store/useAppStore';
 import { useJobStore } from '../store/useJobStore';
 import { useTheme } from '../theme/useTheme';
@@ -45,6 +45,21 @@ export function ConvertScreen() {
     }
   };
 
+  const handlePickPhotos = async () => {
+    setPicking(true);
+    try {
+      const file = await pickFromPhotos('all');
+      if (!file) return;
+      addFile(file);
+      navigation.navigate('TargetFormat', { fileId: file.id });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not open the photo library.';
+      Alert.alert('Photo library error', message);
+    } finally {
+      setPicking(false);
+    }
+  };
+
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: c.bg }]}
@@ -63,6 +78,26 @@ export function ConvertScreen() {
         showsVerticalScrollIndicator={false}
       >
         <DropZone onPress={() => void handlePick()} loading={picking} />
+
+        <Pressable
+          onPress={() => void handlePickPhotos()}
+          disabled={picking}
+          style={({ pressed }) => [
+            styles.photosButton,
+            {
+              backgroundColor: c.surface,
+              borderColor: c.border,
+              opacity: pressed || picking ? 0.7 : 1,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Open photo library"
+        >
+          <Text style={[styles.photosLabel, { color: c.text }]}>Aus Fotos auswählen</Text>
+          <Text style={[styles.photosSub, { color: c.textSec }]}>
+            Fotos & Videos aus der Mediathek
+          </Text>
+        </Pressable>
 
         <Section title="Quick presets" textColor={c.textSec}>
           <View style={styles.presetGrid}>
@@ -146,6 +181,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   sectionBody: { gap: 8 },
+  photosButton: {
+    flexDirection: 'column',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 2,
+    alignItems: 'flex-start',
+  },
+  photosLabel: { fontSize: 15, fontWeight: '600' },
+  photosSub: { fontSize: 12 },
   presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   presetCard: {
     flexBasis: '48%',

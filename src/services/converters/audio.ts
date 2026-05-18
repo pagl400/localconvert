@@ -81,6 +81,7 @@ export async function convertAudio(
       bitrateKbps: opts?.bitrate ?? 192,
       sampleRate: opts?.sampleRate,
       channels: opts?.channels,
+      quality: opts?.mp3EncoderQuality,
       trimStartSec: opts?.trimStartSec,
       trimEndSec: opts?.trimEndSec,
     });

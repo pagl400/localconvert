@@ -108,6 +108,15 @@ const CHANNEL_OPTIONS: { value: number | null; label: string }[] = [
 ];
 const BIT_DEPTH_OPTIONS = [16, 24, 32];
 
+// LAME psychoacoustic-model quality, 0..9 (0 = best/slow, 9 = fast). 2 is
+// LAME's recommended default. Surface three pragmatic presets so the picker
+// stays scannable.
+const MP3_QUALITY_OPTIONS: { value: number; label: string; sub: string }[] = [
+  { value: 0, label: 'Beste',    sub: 'langsam' },
+  { value: 2, label: 'Standard', sub: 'empfohlen' },
+  { value: 5, label: 'Schnell',  sub: 'eilig' },
+];
+
 const GIF_WIDTHS = [480, 360, 240];
 const GIF_FPS_OPTIONS = [30, 24, 15, 10];
 const GIF_COLOR_OPTIONS = [256, 128];
@@ -208,6 +217,9 @@ export function OptionsScreen() {
   const [aSampleRate, setASampleRate] = useState<number | null>(null);
   const [aChannels, setAChannels] = useState<number | null>(null);
   const [aBitDepth, setABitDepth] = useState<number>(16);
+  // LAME psychoacoustic quality. 0 = best (slow), 9 = fast. Default 2 is
+  // LAME's recommended sweet spot. UI exposes three presets.
+  const [aMp3Quality, setAMp3Quality] = useState<number>(2);
 
   // Image
   const [imgQualityKey, setImgQualityKey] = useState<string>('high');
@@ -387,6 +399,7 @@ export function OptionsScreen() {
         sampleRate: aSampleRate ?? undefined,
         channels: aChannels ?? undefined,
         bitDepth: audioBitDepthApplies(targetFormat.ext) ? aBitDepth : undefined,
+        mp3EncoderQuality: targetFormat.ext === 'mp3' ? aMp3Quality : undefined,
         trimStartSec: tr.start > 0 ? tr.start : undefined,
         trimEndSec: trimEnd ? tr.end : undefined,
       };
@@ -529,6 +542,7 @@ export function OptionsScreen() {
             aSampleRate={aSampleRate} setASampleRate={setASampleRate}
             aChannels={aChannels} setAChannels={setAChannels}
             aBitDepth={aBitDepth} setABitDepth={setABitDepth}
+            aMp3Quality={aMp3Quality} setAMp3Quality={setAMp3Quality}
             trimStart={trimStart} setTrimStart={setTrimStart}
             trimEnd={trimEnd} setTrimEnd={setTrimEnd}
             audioMeta={audioMeta}
@@ -797,6 +811,7 @@ function AudioSections(props: CCProp & {
   aSampleRate: number | null; setASampleRate: (v: number | null) => void;
   aChannels: number | null; setAChannels: (v: number | null) => void;
   aBitDepth: number; setABitDepth: (v: number) => void;
+  aMp3Quality: number; setAMp3Quality: (v: number) => void;
   trimStart: string; setTrimStart: (v: string) => void;
   trimEnd: string; setTrimEnd: (v: string) => void;
   audioMeta: { durationSec: number } | null;
@@ -804,6 +819,7 @@ function AudioSections(props: CCProp & {
   const { c } = props;
   const showBitrate = audioBitrateApplies(props.targetExt);
   const showBitDepth = audioBitDepthApplies(props.targetExt);
+  const showMp3Quality = props.targetExt === 'mp3';
   return (
     <>
       {showBitrate ? (
@@ -811,6 +827,18 @@ function AudioSections(props: CCProp & {
           <Chips
             items={AUDIO_BITRATE_FULL.map((b) => ({ key: String(b), label: `${b} kbps` }))}
             value={String(props.aBitrate)} onChange={(v) => props.setABitrate(parseInt(v, 10))} c={c}
+          />
+        </Section>
+      ) : null}
+      {showMp3Quality ? (
+        <Section title="Encoder-Qualität" textColor={c.textSec}>
+          <Chips
+            items={MP3_QUALITY_OPTIONS.map((q) => ({
+              key: String(q.value), label: q.label, sub: q.sub,
+            }))}
+            value={String(props.aMp3Quality)}
+            onChange={(v) => props.setAMp3Quality(parseInt(v, 10))}
+            c={c}
           />
         </Section>
       ) : null}
