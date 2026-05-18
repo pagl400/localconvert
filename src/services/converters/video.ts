@@ -11,6 +11,7 @@ import {
   type GifOptions,
   type VideoInfo,
 } from '../../../modules/expo-media-convert/src';
+import { encodeMp3 as nativeEncodeMp3 } from '../../../modules/expo-lame/src';
 import type { ConversionJob, VideoOptions } from '../../types/conversion';
 
 const SUPPORTED_SOURCES = new Set([
@@ -20,9 +21,11 @@ const SUPPORTED_SOURCES = new Set([
 const VIDEO_TARGETS = new Set(['mp4', 'mov', 'm4v']);
 // MP4→GIF is exposed via AVAssetImageGenerator + ImageIO.
 const GIF_TARGET = 'gif';
-// Audio extraction targets the iOS encoders can write. MP3 is not in the iOS
-// encoder set so it stays out — pick M4A for compressed audio extraction.
+// Audio extraction targets the iOS encoders can write directly.
 const AUDIO_FROM_VIDEO_TARGETS = new Set(['m4a', 'wav', 'aiff', 'caf']);
+// MP3 isn't in the iOS encoder set, so video→mp3 routes through expo-lame
+// (libmp3lame 3.100) which can read any AVFoundation-decodable source.
+const MP3_TARGET = 'mp3';
 
 export function canHandle(sourceExt: string, targetExt: string): boolean {
   if (Platform.OS !== 'ios') return false;
@@ -30,14 +33,17 @@ export function canHandle(sourceExt: string, targetExt: string): boolean {
   return (
     VIDEO_TARGETS.has(targetExt) ||
     AUDIO_FROM_VIDEO_TARGETS.has(targetExt) ||
-    targetExt === GIF_TARGET
+    targetExt === GIF_TARGET ||
+    targetExt === MP3_TARGET
   );
 }
 
 export function videoSupportedTargets(sourceExt: string): string[] {
   if (Platform.OS !== 'ios') return [];
   if (!SUPPORTED_SOURCES.has(sourceExt)) return [];
-  return [...VIDEO_TARGETS, ...AUDIO_FROM_VIDEO_TARGETS, GIF_TARGET].filter((t) => t !== sourceExt);
+  return [
+    ...VIDEO_TARGETS, ...AUDIO_FROM_VIDEO_TARGETS, GIF_TARGET, MP3_TARGET,
+  ].filter((t) => t !== sourceExt);
 }
 
 function hasNonDefaultOptions(v?: VideoOptions): boolean {
@@ -84,6 +90,18 @@ export async function convertVideo(
   if (job.targetExt === GIF_TARGET) {
     const gif: GifOptions = job.gifOptions ?? {};
     return nativeVideoToGif(job.source.uri, outputPath, gif);
+  }
+
+  // Video → MP3: extract audio + encode via libmp3lame.
+  if (job.targetExt === MP3_TARGET) {
+    const a = job.audioOptions;
+    return nativeEncodeMp3(job.source.uri, outputPath, {
+      bitrateKbps: a?.bitrate ?? 192,
+      sampleRate: a?.sampleRate,
+      channels: a?.channels,
+      trimStartSec: a?.trimStartSec,
+      trimEndSec: a?.trimEndSec,
+    });
   }
 
   if (AUDIO_FROM_VIDEO_TARGETS.has(job.targetExt)) {

@@ -79,7 +79,7 @@ const FORMATS: FormatInfo[] = [
 
 const BY_EXT = new Map(FORMATS.map((f) => [f.ext, f]));
 
-export const UNKNOWN: FormatInfo = {
+const UNKNOWN: FormatInfo = {
   ext: '',
   label: 'Unknown',
   group: 'unknown',
@@ -102,18 +102,9 @@ export function detectFormat(filename: string, mime?: string | null): FormatInfo
   return { ...UNKNOWN, ext };
 }
 
-export function getFormatsByGroup(group: FormatGroup): FormatInfo[] {
-  return FORMATS.filter((f) => f.group === group);
-}
-
 export function targetFormatsFor(source: FormatInfo): FormatInfo[] {
   if (source.group === 'unknown') return [];
   return FORMATS.filter((f) => f.group === source.group && f.ext !== source.ext);
-}
-
-export function popularTargets(source: FormatInfo): FormatInfo[] {
-  const targets = targetFormatsFor(source);
-  return targets.slice(0, 4);
 }
 
 export function findFormat(ext: string): FormatInfo | null {

@@ -29,7 +29,7 @@ import { canHandle as canHandleVideo, convertVideo, videoSupportedTargets } from
 
 const OUTPUT_DIR = 'output';
 
-export function ensureOutputDir(): Directory {
+function ensureOutputDir(): Directory {
   const dir = new Directory(Paths.cache, OUTPUT_DIR);
   if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
   return dir;

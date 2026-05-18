@@ -16,7 +16,9 @@ export type Kind =
 
 export const VIDEO_TARGETS = new Set(['mp4', 'mov', 'm4v']);
 export const GIF_TARGET = 'gif';
-export const AUDIO_FROM_VIDEO_TARGETS = new Set(['m4a', 'wav', 'aiff', 'caf']);
+// Audio formats producible from a video source. mp3 is here because expo-lame
+// can decode the video's audio track via AVFoundation and re-encode as MP3.
+export const AUDIO_FROM_VIDEO_TARGETS = new Set(['m4a', 'mp3', 'wav', 'aiff', 'caf']);
 export const VIDEO_SOURCES = new Set([
   'mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv', 'mpeg', 'mpg', 'm4v', '3gp',
 ]);

@@ -33,9 +33,11 @@ function targetFormatsFor(source) {
 // Hardcoded converter capability matrix (mirror of canHandle signatures).
 const VIDEO_SOURCES = ['mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv', 'mpeg', 'mpg', 'm4v', '3gp'];
 const VIDEO_TARGETS = ['mp4', 'mov', 'm4v'];
-const AUDIO_FROM_VIDEO_TARGETS = ['m4a', 'wav', 'aiff', 'caf'];
+// mp3 is included as a video→audio extraction target now that expo-lame can
+// encode it from any AVFoundation-readable source.
+const AUDIO_FROM_VIDEO_TARGETS = ['m4a', 'mp3', 'wav', 'aiff', 'caf'];
 const AUDIO_SOURCES = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'opus', 'aiff', 'aif'];
-const AUDIO_TARGETS = ['m4a', 'wav', 'aiff', 'caf'];
+const AUDIO_TARGETS = ['m4a', 'mp3', 'wav', 'aiff', 'caf'];
 const IMAGE_SOURCES = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'];
 const IMAGE_TARGETS = ['jpg', 'jpeg', 'png', 'webp'];
 

@@ -6,7 +6,7 @@ import {
   type SaveOptions,
 } from 'expo-image-manipulator';
 
-import type { ConversionJob, ImageOptions, Quality } from '../../types/conversion';
+import type { ConversionJob, Quality } from '../../types/conversion';
 
 const SUPPORTED_SOURCES = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']);
 const SUPPORTED_TARGETS = new Set(['jpg', 'jpeg', 'png', 'webp']);
@@ -115,4 +115,3 @@ export function imageSupportedTargets(sourceExt: string): string[] {
   return Array.from(SUPPORTED_TARGETS).filter((t) => t !== sourceExt);
 }
 
-export type { ImageOptions };

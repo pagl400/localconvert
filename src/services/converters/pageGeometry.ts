@@ -10,7 +10,7 @@ export const PAGE_SIZES_PT: Record<PageFormat, [number, number]> = {
 
 export const MM_TO_PT = 2.834645669; // 1 mm in PDF points
 
-export interface PageGeometry {
+interface PageGeometry {
   pageW: number;
   pageH: number;
   marginPt: number;
@@ -26,7 +26,7 @@ export function pageGeometry(opts: ImageToPdfOptions): PageGeometry {
   return { pageW: w, pageH: h, marginPt };
 }
 
-export interface Slot { x: number; y: number; w: number; h: number; }
+interface Slot { x: number; y: number; w: number; h: number; }
 
 // Lays out 1 / 2 / 4 image slots on a page with consistent margins. pdf-lib
 // uses bottom-left origin, so all y-coordinates count up from the bottom edge.

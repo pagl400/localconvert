@@ -7,17 +7,16 @@ import { canHandle, parsePageRanges, type PdfToolVariant } from './pdfToolsLogic
 // PDF → PDF "tools" — implemented entirely with pdf-lib so they work offline.
 // The operation is selected via job.variant:
 //   'compress'    → re-encode and drop metadata
-//   'rotate90'    → rotate every page 90° clockwise
-//   'rotate180'   → rotate every page 180°
-//   'rotate270'   → rotate every page 270° clockwise (= 90° counter-clockwise)
+//   'rotate90/180/270' → rotate every page
 //   'split'       → keep only the page range given in pdfToolsOptions.pages
 //   'delete'      → remove the page range given in pdfToolsOptions.pages
 // Pure helpers (canHandle, parsePageRanges, PdfToolVariant) live in
 // ./pdfToolsLogic so unit tests can exercise them without the expo-file-system
-// and pdf-lib bridges.
+// and pdf-lib bridges. Consumers that need them import from pdfToolsLogic
+// directly; we only re-export canHandle since the converter registry already
+// imports it from here.
 
-export { canHandle, parsePageRanges };
-export type { PdfToolVariant };
+export { canHandle };
 
 export async function runPdfTool(
   job: ConversionJob,

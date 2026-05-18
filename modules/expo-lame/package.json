@@ -1,0 +1,8 @@
+{
+  "name": "expo-lame",
+  "version": "0.1.0",
+  "description": "Local Expo Module wrapping libmp3lame for on-device MP3 encoding.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true
+}

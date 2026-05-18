@@ -21,7 +21,7 @@ export function formatDuration(ms: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export function stripExtension(filename: string): string {
+function stripExtension(filename: string): string {
   const dot = filename.lastIndexOf('.');
   return dot > 0 ? filename.slice(0, dot) : filename;
 }
