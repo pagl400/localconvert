@@ -1,7 +1,9 @@
 import type { ConversionVariant } from './conversion';
 
 export type RootStackParamList = {
+  ModePicker: undefined;
   Tabs: undefined;
+  PhotoPicker: undefined;
   TargetFormat: { fileId: string };
   Options: { fileId: string; targetFormat: string; variant?: ConversionVariant };
   Progress: { jobId: string };

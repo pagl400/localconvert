@@ -28,7 +28,7 @@ export function pageGeometry(opts: ImageToPdfOptions): PageGeometry {
 
 interface Slot { x: number; y: number; w: number; h: number; }
 
-// Lays out 1 / 2 / 4 image slots on a page with consistent margins. pdf-lib
+// Lays out 1 / 2 / 4 image slots on a page with consistent margins, pdf-lib
 // uses bottom-left origin, so all y-coordinates count up from the bottom edge.
 export function slotRects(pageW: number, pageH: number, margin: number, n: 1 | 2 | 4): Slot[] {
   if (n === 1) {

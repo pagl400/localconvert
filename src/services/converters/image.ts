@@ -43,7 +43,7 @@ export async function convertImage(
   const opts = job.imageOptions ?? {};
   const compress = clampQuality(opts.quality, COMPRESS_BY_QUALITY[job.quality]);
 
-  // Build an ordered action list. expo-image-manipulator applies them in
+  // Build an ordered action list, expo-image-manipulator applies them in
   // sequence; we crop first (smaller pixels for downstream work), then resize,
   // then rotate, then flip.
   const ctx = ImageManipulator.manipulate(job.source.uri);
@@ -51,7 +51,7 @@ export async function convertImage(
   // 1) Centre-crop to aspect ratio (so 16:9, 4:3, 1:1 etc. work without needing
   //    the user to draw a rectangle).
   if (opts.cropAspect) {
-    // We need the source dimensions to compute the rect — render a snapshot,
+    // We need the source dimensions to compute the rect, render a snapshot,
     // read dims, then start over with cropped context.
     const snap = await ctx.renderAsync();
     const srcW = snap.width;

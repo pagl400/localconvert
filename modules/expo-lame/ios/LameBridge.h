@@ -4,7 +4,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Thin ObjC façade over libmp3lame. We bridge through ObjC because the Pod's
 // final binary can't safely depend on a clang module map from the vendored
-// xcframework — Release builds reject the per-slice modulemap as a redefinition.
+// xcframework. Release builds reject the per-slice modulemap as a redefinition.
 // Wrapping LAME here keeps <lame/lame.h> visible only inside LameBridge.m.
 @interface LameEncoder : NSObject
 

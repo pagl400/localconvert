@@ -1,75 +1,65 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActionSheetIOS,
   Alert,
+  Animated,
   Platform,
-  ScrollView,
+  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle, Path } from 'react-native-svg';
 
-import { DropZone } from '../components/DropZone';
-import { Logo } from '../components/Logo';
-import { PrivacyBadge } from '../components/PrivacyBadge';
-import {
-  openAppSettings,
-  pickFile,
-  pickFromPhotos,
-  type PhotoPickerOutcome,
-} from '../services/filePicker';
+import { ModeBadge } from '../components/ModeBadge';
+import { Wordmark } from '../components/Wordmark';
+import { pickFile } from '../services/filePicker';
 import { useAppStore } from '../store/useAppStore';
 import { useJobStore } from '../store/useJobStore';
 import { useTheme } from '../theme/useTheme';
 import type { RootStackParamList } from '../types/navigation';
-import { formatBytes } from '../utils/format';
+import { impactLight } from '../utils/haptics';
+import { useIsTabletLandscape } from '../utils/responsive';
+
+import { TabletConvertScreen } from './TabletConvertScreen';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-
 type Source = 'photos' | 'files';
 
+const HERO_RING = 168;
+const HALO = 192;
+const INNER = 76;
+
 export function ConvertScreen() {
+  const isTablet = useIsTabletLandscape();
+  if (isTablet) return <TabletConvertScreen />;
+  return <PhoneConvertScreen />;
+}
+
+function PhoneConvertScreen() {
   const navigation = useNavigation<Nav>();
   const c = useTheme();
+  const mode = useAppStore((s) => s.mode);
   const addFile = useJobStore((s) => s.addFile);
-  const history = useAppStore((s) => s.history);
   const [picking, setPicking] = useState(false);
+  const scale = useRef(new Animated.Value(1)).current;
 
-  // Run the actual picker for the chosen source. Photos returns extra
-  // metadata about iOS permission state so we can surface a hint when the
-  // user has only granted "limited" access.
+  const ringBg = c.scheme === 'dark' ? '#0E0E0F' : c.surface;
+
   const runSource = async (source: Source) => {
+    if (source === 'photos') {
+      navigation.navigate('PhotoPicker');
+      return;
+    }
     setPicking(true);
     try {
-      if (source === 'photos') {
-        const outcome: PhotoPickerOutcome = await pickFromPhotos('all');
-        if (!outcome.file) return;
-        addFile(outcome.file);
-        navigation.navigate('TargetFormat', { fileId: outcome.file.id });
-        if (outcome.limitedAccess) {
-          // Inform asynchronously so the navigation animation still feels
-          // responsive — the user is already on the next screen.
-          setTimeout(() => {
-            Alert.alert(
-              'Eingeschränkter Foto-Zugriff',
-              'Du hast LocalConvert nur Zugriff auf einzelne Fotos erlaubt. ' +
-                'In den Einstellungen kannst du den vollen Zugriff erlauben — die App lädt nichts hoch.',
-              [
-                { text: 'OK', style: 'cancel' },
-                { text: 'Einstellungen öffnen', onPress: () => void openAppSettings() },
-              ],
-            );
-          }, 400);
-        }
-      } else {
-        const file = await pickFile();
-        if (!file) return;
-        addFile(file);
-        navigation.navigate('TargetFormat', { fileId: file.id });
-      }
+      const file = await pickFile();
+      if (!file) return;
+      addFile(file);
+      navigation.navigate('TargetFormat', { fileId: file.id });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Die Auswahl konnte nicht geöffnet werden.';
@@ -79,9 +69,8 @@ export function ConvertScreen() {
     }
   };
 
-  // Show an iOS-native ActionSheet so the user picks the source. On Android
-  // we fall back to Alert.alert which renders as a native dialog.
   const handlePick = () => {
+    impactLight();
     const options = ['Aus Fotos & Videos', 'Aus Dateien', 'Abbrechen'];
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -105,82 +94,104 @@ export function ConvertScreen() {
     ]);
   };
 
+  const pressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 220,
+    }).start();
+  };
+  const pressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 4,
+      tension: 180,
+    }).start();
+  };
+
   return (
-    <SafeAreaView
-      style={[styles.root, { backgroundColor: c.bg }]}
-      edges={['top', 'left', 'right']}
-    >
+    <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]} edges={['top', 'left', 'right']}>
       <View style={styles.topBar}>
-        <View style={styles.topBarLeft}>
-          <Logo size={c.platform === 'android' ? 28 : 30} />
-          <Text style={[styles.appName, { color: c.text }]}>LocalConvert</Text>
-        </View>
-        <PrivacyBadge />
+        <Wordmark size={18} />
+        <ModeBadge mode={mode} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <DropZone onPress={handlePick} loading={picking} />
-
-        {history.length > 0 ? (
-          <Section title="Verlauf" textColor={c.textSec}>
-            {history.slice(0, 5).map((h) => (
-              <View
-                key={h.id}
-                style={[styles.recentRow, { backgroundColor: c.surface, borderColor: c.border }]}
+      <View style={styles.hero}>
+        <Pressable
+          onPress={handlePick}
+          onPressIn={pressIn}
+          onPressOut={pressOut}
+          disabled={picking}
+          accessibilityRole="button"
+          accessibilityLabel="Datei hinzufügen"
+          style={styles.heroPress}
+        >
+          <View
+            style={[
+              styles.halo,
+              { backgroundColor: c.accentSoft, shadowColor: c.accent, opacity: picking ? 0.6 : 1 },
+            ]}
+          >
+            <View style={[styles.ring, { backgroundColor: ringBg }]}>
+              <Svg width={HERO_RING} height={HERO_RING} style={StyleSheet.absoluteFill}>
+                <Circle
+                  cx={HERO_RING / 2}
+                  cy={HERO_RING / 2}
+                  r={HERO_RING / 2 - 2}
+                  stroke={c.accent}
+                  strokeWidth={2.5}
+                  strokeDasharray="6 6"
+                  fill="none"
+                />
+              </Svg>
+              <Animated.View
+                style={[
+                  styles.inner,
+                  { backgroundColor: c.accent, transform: [{ scale }] },
+                ]}
               >
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[styles.recentName, { color: c.text }]} numberOfLines={1}>
-                    {h.sourceName}
-                  </Text>
-                  <Text style={[styles.recentMeta, { color: c.textSec }]}>
-                    {h.sourceExt.toUpperCase()} → {h.targetExt.toUpperCase()} ·{' '}
-                    {formatBytes(h.outputSize ?? 0)}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </Section>
-        ) : (
-          <View style={[styles.introCard, { backgroundColor: c.surface, borderColor: c.border }]}>
-            <Text style={[styles.introTitle, { color: c.text }]}>So funktioniert&apos;s</Text>
-            <Text style={[styles.introStep, { color: c.textSec }]}>
-              1. <Text style={{ color: c.text, fontWeight: '600' }}>Datei wählen</Text> — aus Fotos
-              oder lokalen Dateien.
-            </Text>
-            <Text style={[styles.introStep, { color: c.textSec }]}>
-              2. <Text style={{ color: c.text, fontWeight: '600' }}>Zielformat</Text> picken —
-              MP4, MP3, PDF, JPG, …
-            </Text>
-            <Text style={[styles.introStep, { color: c.textSec }]}>
-              3. <Text style={{ color: c.text, fontWeight: '600' }}>Optionen</Text> einstellen
-              (Qualität, Auflösung, Trim).
-            </Text>
-            <Text style={[styles.introStep, { color: c.textSec }]}>
-              4. <Text style={{ color: c.text, fontWeight: '600' }}>Konvertieren</Text> — die
-              Datei bleibt auf deinem Gerät. Nichts wird hochgeladen.
-            </Text>
+                <Svg width={44} height={44} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M12 5v14M5 12h14"
+                    stroke="#fff"
+                    strokeWidth={2.4}
+                    strokeLinecap="round"
+                  />
+                </Svg>
+              </Animated.View>
+            </View>
           </View>
-        )}
-      </ScrollView>
+        </Pressable>
+
+        <Text style={[styles.title, { color: c.text }]}>Datei hinzufügen</Text>
+        <Text style={[styles.subtitle, { color: c.textSec }]}>
+          Jedes Format. Bleibt auf deinem Gerät.
+        </Text>
+      </View>
+
+      <View style={styles.bottomRow}>
+        <LockGlyph color={c.textSec} />
+        <Text style={[styles.bottomText, { color: c.textSec }]}>
+          Kein Upload, kein Account, kein Tracking
+        </Text>
+      </View>
     </SafeAreaView>
   );
 }
 
-interface SectionProps {
-  title: string;
-  textColor: string;
-  children: React.ReactNode;
-}
-
-function Section({ title, textColor, children }: SectionProps) {
+function LockGlyph({ color }: { color: string }) {
   return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: textColor }]}>{title}</Text>
-      <View style={styles.sectionBody}>{children}</View>
-    </View>
+    <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M5 10.5h14v10H5zM8 10.5V8a4 4 0 018 0v2.5"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </Svg>
   );
 }
 
@@ -190,40 +201,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 4,
+    paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 12,
-    minHeight: 44,
-    gap: 12,
   },
-  topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
-  appName: { fontSize: 19, fontWeight: '600', letterSpacing: -0.3 },
-  scroll: { paddingHorizontal: 16, paddingBottom: 24, gap: 24 },
-  section: { gap: 10 },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    paddingLeft: 4,
-    letterSpacing: 0.6,
+  hero: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
   },
-  sectionBody: { gap: 8 },
-  introCard: {
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    gap: 8,
+  heroPress: {
+    width: HALO,
+    height: HALO,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
   },
-  introTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  introStep: { fontSize: 13, lineHeight: 20 },
-  recentRow: {
+  halo: {
+    width: HALO,
+    height: HALO,
+    borderRadius: HALO / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 24 },
+    shadowRadius: 30,
+    elevation: 8,
+  },
+  ring: {
+    width: HERO_RING,
+    height: HERO_RING,
+    borderRadius: HERO_RING / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inner: {
+    width: INNER,
+    height: INNER,
+    borderRadius: INNER / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: { fontSize: 28, fontWeight: '700', letterSpacing: -0.5, marginTop: 6 },
+  subtitle: { fontSize: 14, marginTop: 2 },
+  bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    gap: 6,
+    paddingBottom: 26,
+    paddingHorizontal: 16,
   },
-  recentName: { fontSize: 14, fontWeight: '600' },
-  recentMeta: { fontSize: 12, marginTop: 2 },
+  bottomText: { fontSize: 12 },
 });

@@ -9,7 +9,7 @@
 //
 // We use jszip and fast-xml-parser (both already in deps). The parser runs in
 // preserveOrder mode so runs within a paragraph come out in the same order
-// they appear in the source — essential for inline content.
+// they appear in the source, essential for inline content.
 
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
@@ -51,7 +51,7 @@ function findAllChildren(node: XmlNode, tagName: string): XmlNode[] {
 }
 
 function textOf(node: XmlNode): string {
-  // w:t / w:delText / etc. have children of the form `{ "#text": "..." }`. The
+  // w:t / w:delText / etc, have children of the form `{ "#text": "..." }`. The
   // value may be string OR number (fast-xml-parser auto-detects numeric text
   // like "1", "3", "2" → JS numbers even with parseTagValue:false in some
   // versions), so we coerce to string explicitly. Without this, integer-only
@@ -526,7 +526,7 @@ function renderParagraphContent(
     const t = tagOf(child);
     if (t === 'w:r') html += renderRun(child, ctx, inheritedRPr);
     else if (t === 'w:hyperlink') html += renderHyperlink(child, ctx, inheritedRPr);
-    // Bookmarks, deletions, insertions, etc. are silently ignored.
+    // Bookmarks, deletions, insertions, etc, are silently ignored.
   }
   return html;
 }

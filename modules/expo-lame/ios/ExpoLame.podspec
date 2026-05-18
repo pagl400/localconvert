@@ -36,17 +36,17 @@ Pod::Spec.new do |s|
     # when the compiler indexes both modulemaps.
     'HEADER_SEARCH_PATHS[sdk=iphoneos*]'         => '$(inherited) $(PODS_TARGET_SRCROOT)/lame.xcframework/ios-arm64/Headers',
     'HEADER_SEARCH_PATHS[sdk=iphonesimulator*]'  => '$(inherited) $(PODS_TARGET_SRCROOT)/lame.xcframework/ios-arm64-simulator/Headers',
-    # Linker needs the .a file's directory plus an explicit -lmp3lame entry —
+    # Linker needs the .a file's directory plus an explicit -lmp3lame entry.
     # CocoaPods auto-derives the link flag from the framework name, but for a
     # static xcframework it can't auto-resolve the slice path.
     'LIBRARY_SEARCH_PATHS[sdk=iphoneos*]'        => '$(inherited) $(PODS_TARGET_SRCROOT)/lame.xcframework/ios-arm64',
     'LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*]' => '$(inherited) $(PODS_TARGET_SRCROOT)/lame.xcframework/ios-arm64-simulator',
     # We only ship arm64 simulator slices (Apple Silicon Macs). Tell xcodebuild
-    # not to try x86_64 — the resulting binary would be missing the .a anyway.
+    # not to try x86_64, the resulting binary would be missing the .a anyway.
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]'       => 'x86_64',
   }
 
-  # The LAME static lib (libmp3lame.a) sits inside the xcframework — the app
+  # The LAME static lib (libmp3lame.a) sits inside the xcframework, the app
   # target's final link step needs the same paths. Use $(inherited) so we
   # extend rather than replace whatever CocoaPods has set up for other pods.
   s.user_target_xcconfig = {

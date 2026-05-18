@@ -50,7 +50,7 @@ export interface AudioTranscodeOptions {
   bitrateKbps?: number;   // for AAC/M4A
   sampleRate?: number;    // 16000 / 22050 / 32000 / 44100 / 48000
   channels?: number;      // 1 (mono) or 2 (stereo)
-  bitDepth?: number;      // 16 / 24 / 32 — for WAV / AIFF / CAF
+  bitDepth?: number;      // 16 / 24 / 32, for WAV / AIFF / CAF
   trimStartSec?: number;
   trimEndSec?: number;
 }

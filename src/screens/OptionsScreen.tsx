@@ -1,9 +1,12 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FileBar } from '../components/FileBar';
+import { NavBar } from '../components/NavBar';
+import { Overline } from '../components/Overline';
 import {
   audioBitDepthApplies,
   audioBitrateApplies,
@@ -12,6 +15,7 @@ import {
 import { probeVideo } from '../services/converters/video';
 import { useAppStore } from '../store/useAppStore';
 import { useJobStore } from '../store/useJobStore';
+import { radius } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 import type {
   AudioMode,
@@ -29,10 +33,14 @@ import type {
   VideoQualityPreset,
 } from '../types/conversion';
 import type { RootStackParamList } from '../types/navigation';
+import { pickFile } from '../services/filePicker';
 import { kindFor, type Kind } from '../utils/conversionKind';
 import { safeBaseName } from '../utils/format';
 import { findFormat } from '../utils/formats';
+import { impactLight } from '../utils/haptics';
 import { formatBytes, formatSeconds, parseTime } from '../utils/time';
+
+const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Options'>;
 type RouteT = RouteProp<RootStackParamList, 'Options'>;
@@ -118,7 +126,10 @@ const MP3_QUALITY_OPTIONS: { value: number; label: string; sub: string }[] = [
 ];
 
 const GIF_WIDTHS = [480, 360, 240];
-const GIF_FPS_OPTIONS = [30, 24, 15, 10];
+// Centisecond-clean values: GIF delay is stored in 1/100s steps so picking
+// "weird" fps like 15 (≈6.67cs) drifts to ~14fps and made viewers playback
+// inconsistent. These map exactly: 50→2cs, 25→4cs, 20→5cs, 10→10cs.
+const GIF_FPS_OPTIONS = [50, 25, 20, 10];
 const GIF_COLOR_OPTIONS = [256, 128];
 const GIF_WARNING_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -166,7 +177,7 @@ const ORIENTATIONS: { value: PageOrientation; label: string }[] = [
 const MARGIN_OPTIONS = [0, 5, 10, 20];
 const IMAGES_PER_PAGE: (1 | 2 | 4)[] = [1, 2, 4];
 
-// Reference kbps at 1080p — mirrors the Swift videoBitrate(...) function.
+// Reference kbps at 1080p, mirrors the Swift videoBitrate(...) function.
 const QUALITY_REFERENCE_KBPS: Record<VideoQualityPreset, number> = {
   maximum: 25_000,
   high: 12_000,
@@ -208,7 +219,7 @@ export function OptionsScreen() {
 
   // GIF state
   const [gifWidth, setGifWidth] = useState<number>(360);
-  const [gifFps, setGifFps] = useState<number>(15);
+  const [gifFps, setGifFps] = useState<number>(10);
   const [gifLoop, setGifLoop] = useState<boolean>(true);
   const [gifColors, setGifColors] = useState<number>(256);
 
@@ -241,6 +252,8 @@ export function OptionsScreen() {
 
   // PDF tools
   const [pdfPages, setPdfPages] = useState<string>('');
+  // PDF merge — additional PDFs that get appended after the source.
+  const [mergePdfs, setMergePdfs] = useState<import('../types/conversion').SelectedFile[]>([]);
 
   // Source probes
   const [videoMeta, setVideoMeta] = useState<{
@@ -427,9 +440,14 @@ export function OptionsScreen() {
       };
     }
 
+    const variantParam = route.params.variant;
     const pdfToolsOptions =
-      kind === 'pdf-tool' && (route.params.variant === 'split' || route.params.variant === 'delete')
-        ? { pages: pdfPages }
+      kind === 'pdf-tool'
+        ? variantParam === 'split' || variantParam === 'delete'
+          ? { pages: pdfPages }
+          : variantParam === 'merge'
+            ? { additionalSources: mergePdfs }
+            : undefined
         : undefined;
 
     return {
@@ -457,6 +475,7 @@ export function OptionsScreen() {
   };
 
   const start = () => {
+    impactLight();
     const job = buildJob();
     startJob(job);
     navigation.replace('Progress', { jobId: job.id });
@@ -464,9 +483,9 @@ export function OptionsScreen() {
 
   const variantLabel =
     route.params.variant === 'styled'
-      ? ' — full styling'
+      ? ' (volles Styling)'
       : route.params.variant === 'plain'
-      ? ' — clean HTML'
+      ? ' (klares HTML)'
       : '';
 
   const showSimpleQuality =
@@ -474,36 +493,26 @@ export function OptionsScreen() {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.headerSide}>
-          <Text style={[styles.back, { color: c.accent }]}>Back</Text>
-        </Pressable>
-        <Text style={[styles.title, { color: c.text }]}>Options</Text>
-        <View style={styles.headerSide} />
-      </View>
+      <NavBar mode="expert" />
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.heading, { backgroundColor: c.surfaceAlt }]}>
-          <Text style={[styles.headingText, { color: c.text }]}>
-            {file.format.label} → {targetFormat.label}
-            {variantLabel}
-          </Text>
-          {targetFormat.description ? (
-            <Text style={[styles.headingSub, { color: c.textSec }]}>{targetFormat.description}</Text>
-          ) : null}
-          {videoMeta ? (
-            <Text style={[styles.headingSub, { color: c.textSec }]}>
-              {videoMeta.width}×{videoMeta.height} · {Math.round(videoMeta.fps)} fps ·{' '}
-              {formatSeconds(videoMeta.durationSec)} · {videoMeta.hasAudio ? 'mit Audio' : 'ohne Audio'}
-            </Text>
-          ) : null}
-          {audioMeta ? (
-            <Text style={[styles.headingSub, { color: c.textSec }]}>
-              {audioMeta.channels === 1 ? 'Mono' : 'Stereo'} · {(audioMeta.sampleRate / 1000).toFixed(1)} kHz ·{' '}
-              {audioMeta.bitrateKbps} kbps · {formatSeconds(audioMeta.durationSec)}
-            </Text>
-          ) : null}
-        </View>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <FileBar
+          file={file}
+          metaSuffix={
+            videoMeta
+              ? `${videoMeta.width}×${videoMeta.height} · ${formatSeconds(videoMeta.durationSec)}`
+              : audioMeta
+              ? `${(audioMeta.sampleRate / 1000).toFixed(1)} kHz · ${audioMeta.bitrateKbps} kbps`
+              : undefined
+          }
+        />
+        <Text style={[styles.targetLine, { color: c.text }]}>
+          → {targetFormat.label}
+          <Text style={{ color: c.textSec }}>{variantLabel}</Text>
+        </Text>
+        {targetFormat.description ? (
+          <Text style={[styles.targetSub, { color: c.textSec }]}>{targetFormat.description}</Text>
+        ) : null}
 
         {kind === 'video' ? (
           <VideoSections
@@ -584,6 +593,7 @@ export function OptionsScreen() {
             c={c}
             variant={route.params.variant}
             pages={pdfPages} setPages={setPdfPages}
+            mergePdfs={mergePdfs} setMergePdfs={setMergePdfs}
           />
         ) : null}
 
@@ -630,7 +640,7 @@ export function OptionsScreen() {
                   </View>
                   {tooBig ? (
                     <Text style={[styles.hint, { color: c.neg }]}>
-                      ⚠ Über 10 MB — kleinere Breite/FPS wählen.
+                      ⚠ Über 10 MB. Kleinere Breite oder FPS wählen.
                     </Text>
                   ) : null}
                 </>
@@ -649,20 +659,37 @@ export function OptionsScreen() {
         ) : null}
 
         <Section title="Output name" textColor={c.textSec}>
-          <View style={[styles.nameRow, { backgroundColor: c.surfaceAlt }]}>
+          <View style={[styles.nameRow, { backgroundColor: c.surface, borderColor: c.separator }]}>
             <TextInput
               value={name}
               onChangeText={(v) => setName(v.replace(/[^a-zA-Z0-9._-]/g, '_'))}
-              style={[styles.nameInput, { color: c.text }]}
+              style={[styles.nameInput, { color: c.text, fontFamily: MONO }]}
               placeholder="output"
               placeholderTextColor={c.textTer}
               autoCorrect={false}
               autoCapitalize="none"
             />
-            <Text style={[styles.nameSuffix, { color: c.textSec }]}>.{targetFormat.ext}</Text>
+            <Text style={[styles.nameSuffix, { color: c.textSec, fontFamily: MONO }]}>
+              .{targetFormat.ext}
+            </Text>
           </View>
         </Section>
 
+        <Text style={[styles.disclaimer, { color: c.textSec }]}>
+          Läuft lokal auf deinem Gerät. Kein Upload, kein Account, kein Tracking.
+        </Text>
+      </ScrollView>
+
+      <View
+        style={[
+          styles.ctaBar,
+          {
+            backgroundColor:
+              c.scheme === 'dark' ? 'rgba(0,0,0,0.85)' : 'rgba(242,242,247,0.85)',
+            borderTopColor: c.separator,
+          },
+        ]}
+      >
         <Pressable
           onPress={start}
           style={({ pressed }) => [
@@ -670,12 +697,9 @@ export function OptionsScreen() {
             { backgroundColor: c.accent, opacity: pressed ? 0.85 : 1 },
           ]}
         >
-          <Text style={styles.ctaLabel}>Convert now</Text>
+          <Text style={styles.ctaLabel}>Konvertieren</Text>
         </Pressable>
-        <Text style={[styles.disclaimer, { color: c.textSec }]}>
-          Runs entirely on your device. No upload, no account, no tracking.
-        </Text>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -975,24 +999,57 @@ function ImageToPdfSections(props: CCProp & {
 function PdfToolSections(props: CCProp & {
   variant: string | undefined;
   pages: string; setPages: (v: string) => void;
+  mergePdfs: import('../types/conversion').SelectedFile[];
+  setMergePdfs: (v: import('../types/conversion').SelectedFile[]) => void;
 }) {
   const { c } = props;
   const v = props.variant;
   const label =
+    v === 'compress-light' ? 'PDF komprimieren (leicht)' :
     v === 'compress' ? 'PDF komprimieren' :
+    v === 'compress-strong' ? 'PDF komprimieren (stark)' :
     v === 'rotate90' ? '90° drehen' :
     v === 'rotate180' ? '180° drehen' :
     v === 'rotate270' ? '270° drehen' :
     v === 'split' ? 'Seiten extrahieren' :
     v === 'delete' ? 'Seiten löschen' :
+    v === 'merge' ? 'PDFs zusammenfügen' :
     'PDF-Tool';
   const needsPages = v === 'split' || v === 'delete';
+  const isMerge = v === 'merge';
+  const compressHint =
+    v === 'compress-light' ? 'Metadaten bleiben erhalten, ~5 % kleiner.' :
+    v === 'compress' ? 'Metadaten entfernt, Object-Streams verdichtet (~5–15 % kleiner).' :
+    v === 'compress-strong' ? 'Aggressiv: zusätzlich Forms, Annotations, JS, Anhänge raus.' :
+    null;
+
+  const addMergePdf = async () => {
+    try {
+      const f = await pickFile();
+      if (!f) return;
+      if (f.ext !== 'pdf') {
+        // Nur PDFs zulassen — wer was anderes braucht, muss vorher konvertieren.
+        return;
+      }
+      props.setMergePdfs([...props.mergePdfs, f]);
+    } catch {
+      // Picker abbrechen ist normal.
+    }
+  };
+
+  const removeMergePdf = (id: string) => {
+    props.setMergePdfs(props.mergePdfs.filter((p) => p.id !== id));
+  };
+
   return (
     <>
       <Section title="Aktion" textColor={c.textSec}>
         <View style={[styles.toggleRow, { backgroundColor: c.surfaceAlt }]}>
           <Text style={[styles.toggleLabel, { color: c.text }]}>{label}</Text>
         </View>
+        {compressHint ? (
+          <Text style={[styles.hint, { color: c.textTer }]}>{compressHint}</Text>
+        ) : null}
       </Section>
       {needsPages ? (
         <Section title="Seitenbereich" textColor={c.textSec}>
@@ -1012,6 +1069,39 @@ function PdfToolSections(props: CCProp & {
               ? 'Diese Seiten werden in die neue PDF übernommen.'
               : 'Diese Seiten werden aus der PDF entfernt.'}
           </Text>
+        </Section>
+      ) : null}
+      {isMerge ? (
+        <Section title="Weitere PDFs" textColor={c.textSec}>
+          {props.mergePdfs.length === 0 ? (
+            <Text style={[styles.hint, { color: c.textTer }]}>
+              Füge mindestens eine zweite PDF hinzu. Sie wird hinter der Quelldatei angefügt.
+            </Text>
+          ) : (
+            <View style={{ gap: 8 }}>
+              {props.mergePdfs.map((p, i) => (
+                <View key={p.id} style={[styles.toggleRow, { backgroundColor: c.surfaceAlt }]}>
+                  <Text style={[styles.toggleLabel, { color: c.text, flex: 1 }]} numberOfLines={1}>
+                    {i + 2}. {p.name}
+                  </Text>
+                  <Pressable onPress={() => removeMergePdf(p.id)} hitSlop={8}>
+                    <Text style={{ color: c.neg, fontSize: 14, fontWeight: '600' }}>Entfernen</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
+          <Pressable
+            onPress={() => void addMergePdf()}
+            style={({ pressed }) => [
+              styles.toggleRow,
+              { backgroundColor: c.accentSoft, marginTop: 8, opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <Text style={[styles.toggleLabel, { color: c.accent, fontWeight: '600' }]}>
+              + PDF hinzufügen
+            </Text>
+          </Pressable>
         </Section>
       ) : null}
     </>
@@ -1084,14 +1174,14 @@ function TrimSection(props: CCProp & {
 
 interface SectionProps {
   title: string;
-  textColor: string;
+  textColor?: string;
   children: React.ReactNode;
 }
 
-function Section({ title, textColor, children }: SectionProps) {
+function Section({ title, children }: SectionProps) {
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: textColor }]}>{title}</Text>
+      <Overline>{title}</Overline>
       {children}
     </View>
   );
@@ -1115,12 +1205,15 @@ function Chips({ items, value, onChange, c }: ChipsProps) {
             onPress={() => onChange(it.key)}
             style={[
               styles.chip,
-              { backgroundColor: active ? c.accent : c.surfaceAlt },
+              {
+                backgroundColor: active ? c.accent : c.surface,
+                borderColor: active ? c.accent : c.separator,
+              },
             ]}
           >
             <Text style={[
               styles.chipLabel,
-              { color: active ? '#ffffff' : c.text, fontWeight: active ? '600' : '500' },
+              { color: active ? '#ffffff' : c.text },
             ]}>
               {it.label}
             </Text>
@@ -1141,51 +1234,34 @@ function Chips({ items, value, onChange, c }: ChipsProps) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 12,
-  },
-  headerSide: { minWidth: 60 },
-  back: { fontSize: 16, fontWeight: '600' },
-  title: { fontSize: 18, fontWeight: '700' },
-  content: { paddingHorizontal: 16, paddingBottom: 32, gap: 20 },
-  heading: { padding: 16, borderRadius: 14, gap: 4 },
-  headingText: { fontSize: 18, fontWeight: '700' },
-  headingSub: { fontSize: 13, lineHeight: 18 },
+  content: { paddingHorizontal: 16, paddingBottom: 120, gap: 18 },
+  targetLine: { fontSize: 22, fontWeight: '700', letterSpacing: -0.3, marginTop: 6 },
+  targetSub: { fontSize: 13, lineHeight: 18, marginTop: -10 },
   section: { gap: 10 },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    paddingLeft: 4,
-    letterSpacing: 0.6,
-  },
   segmented: { flexDirection: 'row', borderRadius: 10, padding: 4, gap: 4 },
   segment: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   segmentLabel: { fontSize: 14 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     borderRadius: 10,
     alignItems: 'center',
-    minWidth: 64,
+    minWidth: 56,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  chipLabel: { fontSize: 14 },
-  chipSub: { fontSize: 11, marginTop: 2 },
+  chipLabel: { fontSize: 13, fontWeight: '700' },
+  chipSub: { fontSize: 11, marginTop: 2, fontWeight: '500' },
   hint: { fontSize: 11, lineHeight: 16, paddingLeft: 4, marginTop: 4 },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 4,
-    borderRadius: 10,
+    borderRadius: radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  nameInput: { flex: 1, paddingVertical: 10, fontSize: 15 },
+  nameInput: { flex: 1, paddingVertical: 12, fontSize: 14 },
   nameSuffix: { fontSize: 14, fontWeight: '500' },
   trimRow: { flexDirection: 'row', borderRadius: 10, padding: 8, gap: 8 },
   trimCol: { flex: 1, paddingHorizontal: 8, paddingVertical: 4 },
@@ -1196,21 +1272,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: radius.card,
   },
   toggleLabel: { fontSize: 15, fontWeight: '500' },
-  estimate: { padding: 14, borderRadius: 12, gap: 8 },
+  estimate: { padding: 14, borderRadius: radius.card, gap: 8 },
   estimateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   estimateLabel: { fontSize: 13 },
   estimateValue: { fontSize: 16, fontWeight: '600' },
-  cta: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
+  ctaBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 22,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  ctaLabel: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+  cta: {
+    paddingVertical: 17,
+    borderRadius: radius.button,
+    alignItems: 'center',
+  },
+  ctaLabel: { color: '#ffffff', fontSize: 17, fontWeight: '600' },
   disclaimer: { fontSize: 12, textAlign: 'center', paddingHorizontal: 8 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   link: { fontSize: 16, fontWeight: '600' },

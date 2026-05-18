@@ -74,7 +74,7 @@ public class ExpoPdfTextModule: Module {
   }
 
   // Synchronous Vision OCR. Vision's request is async-callback by default, so we
-  // wait on a semaphore — fine on the background queue Expo runs the
+  // wait on a semaphore, fine on the background queue Expo runs the
   // AsyncFunction on.
   private static func recognizeText(cgImage: CGImage, languages: [String]) -> String {
     let request = VNRecognizeTextRequest()

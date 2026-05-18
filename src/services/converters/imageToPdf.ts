@@ -17,7 +17,7 @@ export function imageToPdfSupportedTargets(sourceExt: string): string[] {
 
 // pdf-lib only embeds JPEG and PNG natively. Everything else (HEIC, WebP) gets
 // transcoded to JPEG first via expo-image-manipulator, which already handles
-// the heavy formats. Keep the JPEG quality high — we're optimizing for "good
+// the heavy formats. Keep the JPEG quality high, we're optimizing for "good
 // document scan" rather than file size.
 // (pageGeometry / slotRects live in ./pageGeometry so unit tests can exercise
 // them without the file-system stack.)
@@ -54,7 +54,7 @@ export async function convertImageToPdf(
 
   const opts = job.imageToPdfOptions ?? {};
   // Default to "no fixed page, use image dimensions" when the user didn't pick
-  // a page format — preserves prior behaviour where the page hugs the image.
+  // a page format, preserves prior behaviour where the page hugs the image.
   const usePageFormat = opts.pageFormat != null || opts.orientation != null || opts.marginMm != null || opts.imagesPerPage != null;
 
   if (!usePageFormat) {
@@ -72,7 +72,7 @@ export async function convertImageToPdf(
     const { pageW, pageH, marginPt } = pageGeometry(opts);
     const n = (opts.imagesPerPage ?? 1) as 1 | 2 | 4;
     const slots = slotRects(pageW, pageH, marginPt, n);
-    // For a single source image we only fill the first slot — multi-file
+    // For a single source image we only fill the first slot, multi-file
     // batches would queue additional images into the remaining slots.
     const slot = slots[0];
     const scale = Math.min(slot.w / embedded.width, slot.h / embedded.height);

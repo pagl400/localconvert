@@ -38,13 +38,16 @@ export type Quality = 'fast' | 'high' | 'max';
 export type ConversionVariant =
   | 'plain'
   | 'styled'
-  // PDF-only "tools" variants — drive the pdf-lib pipeline.
+  // PDF-only "tools" variants, drive the pdf-lib pipeline.
   | 'compress'
+  | 'compress-light'
+  | 'compress-strong'
   | 'rotate90'
   | 'rotate180'
   | 'rotate270'
   | 'split'
   | 'delete'
+  | 'merge'
   // Force the OCR path for PDF → TXT when the PDF has no usable text layer.
   | 'ocr';
 
@@ -125,6 +128,8 @@ export interface DocxToPdfOptions {
 export interface PdfToolsOptions {
   // For split/delete: page-range expression, e.g. "1-5, 8, 12-20" (1-based).
   pages?: string;
+  // For merge: additional PDFs to concatenate after the primary `source`.
+  additionalSources?: SelectedFile[];
 }
 
 export interface ConversionJob {

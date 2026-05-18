@@ -1,10 +1,27 @@
 // Pure helpers for the PDF-tools pipeline. Kept free of expo-file-system and
 // pdf-lib imports so unit tests can exercise them under plain Node.
 
-export type PdfToolVariant = 'compress' | 'rotate90' | 'rotate180' | 'rotate270' | 'split' | 'delete';
+export type PdfToolVariant =
+  | 'compress'
+  | 'compress-light'
+  | 'compress-strong'
+  | 'rotate90'
+  | 'rotate180'
+  | 'rotate270'
+  | 'split'
+  | 'delete'
+  | 'merge';
 
 const VARIANTS: ReadonlySet<string> = new Set([
-  'compress', 'rotate90', 'rotate180', 'rotate270', 'split', 'delete',
+  'compress',
+  'compress-light',
+  'compress-strong',
+  'rotate90',
+  'rotate180',
+  'rotate270',
+  'split',
+  'delete',
+  'merge',
 ]);
 
 export function canHandle(sourceExt: string, targetExt: string, variant?: string): boolean {

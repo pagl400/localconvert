@@ -517,7 +517,7 @@ public class ExpoMediaConvertModule: Module {
       do {
         try compAudioTrack?.insertTimeRange(timeRange, of: audioTrack, at: .zero)
       } catch {
-        // Audio is best-effort — if insert fails, drop the audio rather than aborting.
+        // Audio is best-effort, if insert fails, drop the audio rather than aborting.
         compAudioTrack = nil
       }
     }
@@ -748,8 +748,17 @@ public class ExpoMediaConvertModule: Module {
       return
     }
 
-    let fps = max(1, min(30, opts.fps))
-    let frameInterval = 1.0 / Double(fps)
+    // GIF stores per-frame delay as centiseconds (1/100s steps). Picking
+    // 15 fps yields 1/15 ≈ 0.0667s which rounds to 7cs → effective ~14.3 fps,
+    // and many viewers clamp delays under 0.02s to 0.1s. We round to the
+    // nearest centisecond ONCE and use it both for sampling-interval and the
+    // stored delay so the GIF plays at the rate the user picked (within GIF
+    // format precision).
+    let requestedFps = max(1, min(50, opts.fps))
+    let rawInterval = 1.0 / Double(requestedFps)
+    let centiseconds = max(2, Int((rawInterval * 100).rounded()))
+    let frameInterval = Double(centiseconds) / 100.0
+
     var times: [NSValue] = []
     var t = start
     while t < end {

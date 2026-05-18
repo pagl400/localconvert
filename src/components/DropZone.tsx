@@ -15,7 +15,7 @@ export function DropZone({ onPress, loading = false }: DropZoneProps) {
       onPress={onPress}
       disabled={loading}
       accessibilityRole="button"
-      accessibilityLabel="Pick a file to convert"
+      accessibilityLabel="Datei zum Umwandeln auswählen"
       style={({ pressed }) => [
         styles.zone,
         {
@@ -36,9 +36,9 @@ export function DropZone({ onPress, loading = false }: DropZoneProps) {
           />
         </Svg>
       </View>
-      <Text style={[styles.title, { color: c.text }]}>Pick a file</Text>
+      <Text style={[styles.title, { color: c.text }]}>Datei wählen</Text>
       <Text style={[styles.subtitle, { color: c.textSec }]}>
-        Choose any file from your device. Conversion runs locally — nothing is uploaded.
+        Aus Fotos, Dateien oder Mediathek. Alles läuft lokal, nichts wird hochgeladen.
       </Text>
     </Pressable>
   );

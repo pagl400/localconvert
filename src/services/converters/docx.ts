@@ -82,14 +82,14 @@ const HTML_STYLE = `      :root { color-scheme: light dark; }
 // Style map: tells mammoth how to translate non-default Word styles. Without
 // this, the calibre demo (and any real-world DOCX) renders Title paragraphs,
 // table-of-contents entries, and emphasis runs as plain <p>, losing visual
-// hierarchy. Each entry follows mammoth's DSL — see
+// hierarchy. Each entry follows mammoth's DSL, see
 // https://github.com/mwilliamson/mammoth.js#writing-style-maps
 //
 // Important: do NOT map "List Paragraph" here. Mammoth's built-in numbering
 // handler turns paragraphs with `<w:numPr>` into proper <ul>/<ol> structures,
 // and any explicit styleMap entry for List Paragraph wins over that logic,
 // breaking the list output. Decimal-aligned paragraphs are usually inside
-// table cells with numeric data — leaving them as default <p> renders fine.
+// table cells with numeric data, leaving them as default <p> renders fine.
 const STYLE_MAP = [
   "p[style-name='Title'] => h1.title:fresh",
   "p[style-name='Subtitle'] => p.subtitle:fresh",
@@ -161,7 +161,7 @@ export async function convertDocx(
   job: ConversionJob,
   outputPath: string,
 ): Promise<{ uri: string; size: number }> {
-  // Lazy load — mammoth's browser bundle and turndown are heavy and we don't
+  // Lazy load, mammoth's browser bundle and turndown are heavy and we don't
   // want them on the startup critical path.
   // @ts-expect-error - no types for the browser bundle, surface matches 'mammoth'.
   const mammothModule = await import('mammoth/mammoth.browser.js');

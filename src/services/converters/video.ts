@@ -63,7 +63,7 @@ function hasNonDefaultOptions(v?: VideoOptions): boolean {
 }
 
 function toTranscodeOptions(v: VideoOptions): TranscodeOptions {
-  // Drop undefined fields so Swift sees a clean dict — its defaults kick in for
+  // Drop undefined fields so Swift sees a clean dict, its defaults kick in for
   // anything that isn't explicitly set.
   const out: TranscodeOptions = {};
   if (v.width != null) out.width = v.width;

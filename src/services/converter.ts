@@ -5,7 +5,7 @@ import { runConvert } from './converters';
 /**
  * Conversion runner. Drives a small synthetic progress curve so the UI feels
  * alive, then performs the real conversion on the last tick. The actual work
- * lives in `./converters/*` — image conversions use expo-image-manipulator,
+ * lives in `./converters/*`, image conversions use expo-image-manipulator,
  * text/data conversions are pure JS. Anything outside those buckets throws a
  * clear error instead of writing a misleading copy.
  *

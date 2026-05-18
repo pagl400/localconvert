@@ -2,7 +2,7 @@ import ExpoModulesCore
 import AVFoundation
 // LameEncoder is the ObjC façade declared in LameBridge.h. Wrapping libmp3lame
 // in ObjC means we don't depend on a clang module-map from the vendored
-// xcframework — Release builds reject per-slice modulemaps as redefinitions.
+// xcframework. Release builds reject per-slice modulemaps as redefinitions.
 // The Pod's umbrella header picks up LameBridge.h automatically.
 
 // MP3 encoder built on top of libmp3lame 3.100 (LGPL). The pipeline:
@@ -13,7 +13,7 @@ import AVFoundation
 //   2. AVAssetReader extracts the audio track and decodes it to interleaved
 //      16-bit PCM at 44.1 kHz stereo (or whatever the user asked for).
 //   3. We feed PCM frames in 1152-sample chunks (LAME's preferred granule
-//      size — one MP3 frame) into `lame_encode_buffer_interleaved`, which
+//      size, one MP3 frame) into `lame_encode_buffer_interleaved`, which
 //      writes the encoded bytes to an in-memory buffer.
 //   4. Flush + close, write the resulting bytes to the destination URL.
 

@@ -16,7 +16,7 @@ const SUPPORTED_SOURCES = new Set(['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'o
 // AVFoundation on iOS can write m4a/wav/aiff/caf natively; mp3 is encoded via
 // our own libmp3lame xcframework (expo-lame). FLAC/OGG/OPUS encoding are not
 // in iOS' built-in encoder set and aren't worth a separate native lib yet.
-// Note: raw ADTS (.aac) isn't an AVFileType — AAC ships inside .m4a here.
+// Note: raw ADTS (.aac) isn't an AVFileType. AAC ships inside .m4a here.
 const SUPPORTED_TARGETS = new Set(['mp3', 'm4a', 'wav', 'aiff', 'caf']);
 // Targets where bitrate (lossy compression) actually applies.
 const COMPRESSED_TARGETS = new Set(['m4a', 'mp3']);
@@ -75,7 +75,7 @@ export async function convertAudio(
 
   // MP3 goes through expo-lame (libmp3lame 3.100). AVFoundation can't write
   // MP3 natively, so we always route it here regardless of which options the
-  // user set. expo-lame handles trim/sample-rate/channels/bitrate itself.
+  // user set, expo-lame handles trim/sample-rate/channels/bitrate itself.
   if (job.targetExt === MP3_TARGET) {
     return nativeEncodeMp3(job.source.uri, outputPath, {
       bitrateKbps: opts?.bitrate ?? 192,

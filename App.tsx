@@ -12,11 +12,14 @@ import Svg, { Path, Rect } from 'react-native-svg';
 
 import { ConvertScreen } from './src/screens/ConvertScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
+import { ModePickerScreen } from './src/screens/ModePickerScreen';
 import { OptionsScreen } from './src/screens/OptionsScreen';
+import { PhotoPickerScreen } from './src/screens/PhotoPickerScreen';
 import { ProgressScreen } from './src/screens/ProgressScreen';
 import { ResultScreen } from './src/screens/ResultScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { TargetFormatScreen } from './src/screens/TargetFormatScreen';
+import { useAppStore } from './src/store/useAppStore';
 import type { Palette } from './src/theme/colors';
 import { useTheme } from './src/theme/useTheme';
 import type { RootStackParamList, TabsParamList } from './src/types/navigation';
@@ -107,17 +110,25 @@ function MainTabs() {
 function ThemedApp() {
   const c = useTheme();
   const navTheme = makeNavTheme(c);
+  const hasSeenModePicker = useAppStore((s) => s.hasSeenModePicker);
 
   return (
     <NavigationContainer theme={navTheme}>
       <StatusBar style={c.scheme === 'dark' ? 'light' : 'dark'} />
       <Stack.Navigator
+        initialRouteName={hasSeenModePicker ? 'Tabs' : 'ModePicker'}
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: c.bg },
         }}
       >
+        <Stack.Screen
+          name="ModePicker"
+          component={ModePickerScreen}
+          options={{ gestureEnabled: false }}
+        />
         <Stack.Screen name="Tabs" component={MainTabs} />
+        <Stack.Screen name="PhotoPicker" component={PhotoPickerScreen} />
         <Stack.Screen name="TargetFormat" component={TargetFormatScreen} />
         <Stack.Screen name="Options" component={OptionsScreen} />
         <Stack.Screen name="Progress" component={ProgressScreen} />

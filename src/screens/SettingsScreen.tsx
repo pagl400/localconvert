@@ -1,27 +1,36 @@
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Overline } from '../components/Overline';
 import { APP_VERSION, IMPRINT_URL, PRIVACY_URL, SOURCE_URL } from '../constants';
-import { useAppStore, type Theme } from '../store/useAppStore';
+import { type Mode, useAppStore, type Theme } from '../store/useAppStore';
 import { useTheme } from '../theme/useTheme';
 import type { Quality } from '../types/conversion';
+import { selection } from '../utils/haptics';
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
+  { value: 'light', label: 'Hell' },
+  { value: 'dark', label: 'Dunkel' },
 ];
 
 const QUALITY_OPTIONS: { value: Quality; label: string }[] = [
-  { value: 'fast', label: 'Fast' },
-  { value: 'high', label: 'High' },
+  { value: 'fast', label: 'Schnell' },
+  { value: 'high', label: 'Hoch' },
   { value: 'max', label: 'Maximum' },
+];
+
+const MODE_OPTIONS: { value: Mode; label: string }[] = [
+  { value: 'simple', label: 'Simple' },
+  { value: 'expert', label: 'Expert' },
 ];
 
 export function SettingsScreen() {
   const c = useTheme();
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
+  const mode = useAppStore((s) => s.mode);
+  const setMode = useAppStore((s) => s.setMode);
   const defaultQuality = useAppStore((s) => s.defaultQuality);
   const setDefaultQuality = useAppStore((s) => s.setDefaultQuality);
   const keepHistory = useAppStore((s) => s.keepHistory);
@@ -29,18 +38,30 @@ export function SettingsScreen() {
   const autoCleanTemp = useAppStore((s) => s.autoCleanTemp);
   const setAutoCleanTemp = useAppStore((s) => s.setAutoCleanTemp);
 
+  const switchMode = (m: Mode) => {
+    selection();
+    setMode(m);
+  };
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: c.text }]}>Settings</Text>
+        <Text style={[styles.title, { color: c.text }]}>Einstellungen</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Section title="Appearance" textColor={c.textSec}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Section title="Modus">
+          <Text style={[styles.helper, { color: c.textSec }]}>
+            Simple zeigt 3 Format-Vorschläge. Expert öffnet die volle Toolbox.
+          </Text>
+          <Segmented options={MODE_OPTIONS} value={mode} onChange={switchMode} palette={c} />
+        </Section>
+
+        <Section title="Darstellung">
           <Segmented options={THEME_OPTIONS} value={theme} onChange={setTheme} palette={c} />
         </Section>
 
-        <Section title="Default quality" textColor={c.textSec}>
+        <Section title="Standard-Qualität">
           <Segmented
             options={QUALITY_OPTIONS}
             value={defaultQuality}
@@ -49,34 +70,30 @@ export function SettingsScreen() {
           />
         </Section>
 
-        <Section title="Privacy" textColor={c.textSec}>
+        <Section title="Privatsphäre">
           <ToggleRow
-            label="Keep conversion history"
+            label="Verlauf behalten"
             value={keepHistory}
             onChange={setKeepHistory}
             palette={c}
           />
           <ToggleRow
-            label="Auto-clean temp files after export"
+            label="Temp-Dateien nach Export löschen"
             value={autoCleanTemp}
             onChange={setAutoCleanTemp}
             palette={c}
           />
         </Section>
 
-        <Section title="About" textColor={c.textSec}>
-          <Row
-            label="Version"
-            value={APP_VERSION}
-            palette={c}
-          />
-          <LinkRow label="Privacy policy" url={PRIVACY_URL} palette={c} />
+        <Section title="Über">
+          <Row label="Version" value={APP_VERSION} palette={c} />
+          <LinkRow label="Datenschutz" url={PRIVACY_URL} palette={c} />
           <LinkRow label="Impressum" url={IMPRINT_URL} palette={c} />
-          <LinkRow label="Source on GitHub" url={SOURCE_URL} palette={c} />
+          <LinkRow label="Quellcode auf GitHub" url={SOURCE_URL} palette={c} />
         </Section>
 
         <Text style={[styles.foot, { color: c.textSec }]}>
-          LocalConvert never connects to the internet for conversions. All work happens on this device.
+          LocalConvert geht für Konvertierungen nie ins Netz. Alles läuft auf deinem Gerät.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -85,14 +102,13 @@ export function SettingsScreen() {
 
 interface SectionProps {
   title: string;
-  textColor: string;
   children: React.ReactNode;
 }
 
-function Section({ title, textColor, children }: SectionProps) {
+function Section({ title, children }: SectionProps) {
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: textColor }]}>{title}</Text>
+      <Overline>{title}</Overline>
       <View style={styles.sectionBody}>{children}</View>
     </View>
   );
@@ -200,14 +216,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700' },
   content: { paddingHorizontal: 16, paddingBottom: 32, gap: 24 },
   section: { gap: 8 },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    paddingLeft: 8,
-    letterSpacing: 0.6,
-  },
   sectionBody: { borderRadius: 12, overflow: 'hidden', gap: 1 },
+  helper: { fontSize: 13, lineHeight: 18, paddingHorizontal: 4 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

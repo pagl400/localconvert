@@ -35,7 +35,7 @@ function tidyText(input: string): string {
 }
 
 // A PDF page is treated as "image-only" when its text layer has too few
-// real words to be useful — pure scans return empty/near-empty strings, while
+// real words to be useful, pure scans return empty/near-empty strings, while
 // design-heavy PDFs have only a handful of stray glyphs. Below the threshold
 // the page-rendered image is the better representation.
 const IMAGE_ONLY_WORD_THRESHOLD = 8;
@@ -125,13 +125,16 @@ ${body}
 }
 
 function pagesToMarkdown(pages: ExtractedPage[]): string {
+  // Bild-Seiten landen NICHT als data:URI inline — bei großen PDFs schiebt das
+  // mehrere MB Base64 in den Markdown-String und der File-Writer scheitert
+  // beim Speichern. Stattdessen ein hinweisender Platzhalter; wer Bilder
+  // braucht, exportiert als HTML (dort sind die Base64-Embeds OK, weil der
+  // Browser streamt) oder lässt OCR laufen.
   return pages
     .map((p) => {
       const blocks: string[] = [`<!-- Seite ${p.page} -->`];
       if (isImageOnlyPage(p)) {
-        if (p.imageBase64) {
-          blocks.push(`![Seite ${p.page}](data:image/jpeg;base64,${p.imageBase64})`);
-        }
+        blocks.push(`> *Seite ${p.page} ist ein Bild. Für Bildinhalt nutze HTML-Export oder OCR → TXT.*`);
       } else {
         const text = tidyText(p.text);
         if (text) blocks.push(text);
@@ -158,7 +161,8 @@ export async function convertPdf(
     return { uri: dest.uri, size: dest.size };
   }
 
-  const wantsImages = job.targetExt === 'html' || job.targetExt === 'md';
+  // Only HTML inlines images; MD now uses a placeholder for image-only pages.
+  const wantsImages = job.targetExt === 'html';
   const { title, pageCount, pages } = await extractPdfText(job.source.uri, {
     renderImages: wantsImages,
   });

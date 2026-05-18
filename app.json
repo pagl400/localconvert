@@ -11,14 +11,14 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0f0f11"
+      "backgroundColor": "#0B1838"
     },
     "ios": {
       "bundleIdentifier": "dev.pagl.localconvert",
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "LocalConvert needs access to your photos to read images you want to convert. Nothing is uploaded.",
+        "NSPhotoLibraryUsageDescription": "LocalConvert braucht Zugriff auf deine Fotos und Videos, um sie umzuwandeln. Nichts verlässt dein Gerät.",
         "CFBundleDocumentTypes": [
           {
             "CFBundleTypeName": "All files",
@@ -36,7 +36,7 @@
       "package": "dev.pagl.localconvert",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0f0f11"
+        "backgroundColor": "#0B1838"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -73,6 +73,16 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
+    "plugins": [
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "LocalConvert braucht Zugriff auf deine Fotos und Videos, um sie umzuwandeln. Nichts verlässt dein Gerät.",
+          "savePhotosPermission": "LocalConvert speichert das Konvertierungs-Ergebnis nur, wenn du es ausdrücklich exportierst.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "414fbe0d-fee3-4020-acf6-feb1de679530"

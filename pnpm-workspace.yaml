@@ -1,5 +1,6 @@
 allowBuilds:
   dtrace-provider: true
+  sharp: set this to true or false
   unrs-resolver: true
 nodeLinker: hoisted
 overrides:

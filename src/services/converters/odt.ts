@@ -168,7 +168,7 @@ function makeOdtBuilder(): OdtBuilder {
   return {
     styles,
     styleNameFor(state) {
-      // Skip the default state — no span needed.
+      // Skip the default state, no span needed.
       if (
         !state.bold &&
         !state.italic &&
@@ -239,7 +239,7 @@ function htmlToOdtBody(html: string, builder: OdtBuilder): string {
       if (blockOpen) {
         blockBuffer.push(odtSpanWrap(txt, top(), builder));
       } else if (txt.trim()) {
-        // Loose text outside any block — wrap in <text:p>.
+        // Loose text outside any block, wrap in <text:p>.
         out.push(`<text:p text:style-name="Standard">${odtSpanWrap(txt, top(), builder)}</text:p>`);
       }
       continue;
@@ -340,7 +340,7 @@ function htmlToOdtBody(html: string, builder: OdtBuilder): string {
           if (t === 'th') pushInline({ bold: true });
           break;
         case 'img': {
-          // Inline image — write a placeholder. Real image embedding requires
+          // Inline image, write a placeholder. Real image embedding requires
           // adding the file to the zip; we'll handle data: URIs in the wrapper.
           const src = tok.attrs.src ?? '';
           const m = src.match(/^data:(image\/[a-z+]+);base64,(.+)$/i);
@@ -941,7 +941,7 @@ function renderOdtInline(node: XmlNode, styles: Map<string, OdtStyleInfo>): stri
         }
       }
     } else if (t) {
-      // Walk through unknown wrappers — e.g. nested text:span variants.
+      // Walk through unknown wrappers, e.g, nested text:span variants.
       out += renderOdtInline(c, styles);
     }
   }
@@ -1029,7 +1029,7 @@ async function parseOdtToHtml(arrayBuffer: ArrayBuffer): Promise<string> {
     collectStyles(await zip.files['styles.xml'].async('text'));
   }
 
-  // Resolve style parents (single level — for our purposes that's enough).
+  // Resolve style parents (single level, for our purposes that's enough).
   for (const [name, s] of styles.entries()) {
     let cur = s;
     while (cur.parent) {
