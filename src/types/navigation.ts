@@ -1,7 +1,9 @@
+import type { ConversionVariant } from './conversion';
+
 export type RootStackParamList = {
   Tabs: undefined;
   TargetFormat: { fileId: string };
-  Options: { fileId: string; targetFormat: string; variant?: 'plain' | 'styled' };
+  Options: { fileId: string; targetFormat: string; variant?: ConversionVariant };
   Progress: { jobId: string };
   Result: { jobId: string };
 };

@@ -24,13 +24,21 @@ const FORMATS: FormatInfo[] = [
   { ext: 'm4a', label: 'M4A', group: 'audio', mime: 'audio/mp4' },
   { ext: 'opus', label: 'Opus', group: 'audio', mime: 'audio/opus' },
   { ext: 'aiff', label: 'AIFF', group: 'audio', mime: 'audio/aiff' },
+  { ext: 'aif', label: 'AIFF', group: 'audio', mime: 'audio/aiff' },
+  { ext: 'caf', label: 'CAF', group: 'audio', mime: 'audio/x-caf', description: 'Apple Core Audio container.' },
 
   // Video
   { ext: 'mp4', label: 'MP4', group: 'video', mime: 'video/mp4', description: 'Best compatibility everywhere.' },
   { ext: 'mov', label: 'MOV', group: 'video', mime: 'video/quicktime' },
+  { ext: 'm4v', label: 'M4V', group: 'video', mime: 'video/x-m4v', description: 'iTunes-style MP4 container.' },
   { ext: 'mkv', label: 'MKV', group: 'video', mime: 'video/x-matroska' },
   { ext: 'avi', label: 'AVI', group: 'video', mime: 'video/x-msvideo' },
   { ext: 'webm', label: 'WebM', group: 'video', mime: 'video/webm' },
+  { ext: 'flv', label: 'FLV', group: 'video', mime: 'video/x-flv' },
+  { ext: 'wmv', label: 'WMV', group: 'video', mime: 'video/x-ms-wmv' },
+  { ext: 'mpeg', label: 'MPEG', group: 'video', mime: 'video/mpeg' },
+  { ext: 'mpg', label: 'MPG', group: 'video', mime: 'video/mpeg' },
+  { ext: '3gp', label: '3GP', group: 'video', mime: 'video/3gpp' },
 
   // Documents
   { ext: 'pdf', label: 'PDF', group: 'document', mime: 'application/pdf' },
@@ -39,7 +47,9 @@ const FORMATS: FormatInfo[] = [
   { ext: 'rtf', label: 'RTF', group: 'document', mime: 'application/rtf' },
   { ext: 'txt', label: 'TXT', group: 'document', mime: 'text/plain' },
   { ext: 'md', label: 'Markdown', group: 'document', mime: 'text/markdown' },
+  { ext: 'markdown', label: 'Markdown', group: 'document', mime: 'text/markdown' },
   { ext: 'html', label: 'HTML', group: 'document', mime: 'text/html' },
+  { ext: 'htm', label: 'HTML', group: 'document', mime: 'text/html' },
 
   // E-Books
   { ext: 'epub', label: 'EPUB', group: 'ebook', mime: 'application/epub+zip' },

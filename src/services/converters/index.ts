@@ -18,6 +18,7 @@ import {
 } from './imageToPdf';
 import { canHandle as canHandleOdt, convertOdt, odtSupportedTargets } from './odt';
 import { canHandle as canHandlePdf, convertPdf, pdfSupportedTargets } from './pdf';
+import { canHandle as canHandlePdfTools, runPdfTool } from './pdfTools';
 import {
   canHandle as canHandleSpreadsheet,
   convertSpreadsheet,
@@ -34,13 +35,14 @@ export function ensureOutputDir(): Directory {
   return dir;
 }
 
-export function isSupported(sourceExt: string, targetExt: string): boolean {
+export function isSupported(sourceExt: string, targetExt: string, variant?: string): boolean {
   return (
     canHandleImageToPdf(sourceExt, targetExt) ||
     canHandleHtmlToPdf(sourceExt, targetExt) ||
     canHandleOdt(sourceExt, targetExt) ||
     canHandleImage(sourceExt, targetExt) ||
     canHandlePdf(sourceExt, targetExt) ||
+    canHandlePdfTools(sourceExt, targetExt, variant) ||
     canHandleDocx(sourceExt, targetExt) ||
     canHandleEpub(sourceExt, targetExt) ||
     canHandleSpreadsheet(sourceExt, targetExt) ||
@@ -73,6 +75,8 @@ export async function runConvert(job: ConversionJob): Promise<{ uri: string; siz
   // Order matters: image→pdf and html→pdf must run before the generic image/
   // docx/etc. handlers, so .jpg→.pdf, .docx→.pdf, .md→.pdf route here instead
   // of the older text-only paths.
+  if (canHandlePdfTools(job.source.ext, job.targetExt, job.variant))
+    return runPdfTool(job, outputPath);
   if (canHandleImageToPdf(job.source.ext, job.targetExt))
     return convertImageToPdf(job, outputPath);
   if (canHandleHtmlToPdf(job.source.ext, job.targetExt)) return convertToPdf(job, outputPath);

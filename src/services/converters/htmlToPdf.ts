@@ -1,6 +1,6 @@
 import { File } from 'expo-file-system';
 
-import type { ConversionJob } from '../../types/conversion';
+import type { ConversionJob, PageFormat } from '../../types/conversion';
 
 // Sources we can render to PDF directly via the WKWebView-backed expo-print.
 // We accept anything that we can produce HTML from elsewhere; the controller
@@ -138,6 +138,13 @@ async function sourceToHtml(job: ConversionJob): Promise<string> {
   throw new Error(`Cannot build PDF from .${ext} source`);
 }
 
+const PAGE_SIZES_PT: Record<PageFormat, [number, number]> = {
+  a4: [595.28, 841.89],
+  letter: [612, 792],
+  a5: [419.53, 595.28],
+  a3: [841.89, 1190.55],
+};
+
 export async function convertToPdf(
   job: ConversionJob,
   outputPath: string,
@@ -148,11 +155,28 @@ export async function convertToPdf(
   const title = job.outputName.replace(/\.pdf$/i, '');
   const html = wrapHtml(innerHtml, title);
 
+  // Page size: DOCX → PDF uses the user-selected page format. Other sources
+  // fall back to expo-print's default (US Letter).
+  let width: number | undefined;
+  let height: number | undefined;
+  if (job.source.ext === 'docx' && job.docxToPdfOptions) {
+    const format = job.docxToPdfOptions.pageFormat ?? 'a4';
+    const orientation = job.docxToPdfOptions.orientation ?? 'portrait';
+    const [w, h] = PAGE_SIZES_PT[format];
+    if (orientation === 'landscape') {
+      width = h;
+      height = w;
+    } else {
+      width = w;
+      height = h;
+    }
+  }
+
   const { uri } = await printToFileAsync({
     html,
     base64: false,
-    // expo-print picks reasonable defaults (US Letter). The @page rule in our
-    // stylesheet still applies via the WebView, giving consistent margins.
+    width,
+    height,
   });
 
   const dest = new File(outputPath);

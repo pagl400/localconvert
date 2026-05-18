@@ -1,10 +1,40 @@
 import ExpoModulesCore
 import PDFKit
 import UIKit
+import Vision
 
 public class ExpoPdfTextModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ExpoPdfText")
+
+    // OCR every page via Vision. Returns the same shape as extractText (per
+    // page), so the JS side can interleave OCR + native text-layer output.
+    AsyncFunction("ocrPdf") { (uri: String, languages: [String]) -> [String: Any] in
+      let cleanUri = uri.hasPrefix("file://") ? uri : "file://\(uri)"
+      guard let url = URL(string: cleanUri), let doc = PDFDocument(url: url) else {
+        throw NSError(
+          domain: "ExpoPdfText",
+          code: 1,
+          userInfo: [NSLocalizedDescriptionKey: "Could not open PDF at \(uri)."]
+        )
+      }
+      var pages: [[String: Any]] = []
+      for index in 0..<doc.pageCount {
+        guard let page = doc.page(at: index) else { continue }
+        var text = ""
+        if let image = ExpoPdfTextModule.renderPage(page), let cg = image.cgImage {
+          text = ExpoPdfTextModule.recognizeText(cgImage: cg, languages: languages)
+        }
+        pages.append([
+          "page": index + 1,
+          "text": text.trimmingCharacters(in: .whitespacesAndNewlines),
+        ])
+      }
+      return [
+        "pageCount": doc.pageCount,
+        "pages": pages,
+      ]
+    }
 
     AsyncFunction("extractText") { (uri: String, renderImages: Bool) -> [String: Any] in
       let cleanUri = uri.hasPrefix("file://") ? uri : "file://\(uri)"
@@ -41,6 +71,29 @@ public class ExpoPdfTextModule: Module {
         "pages": pages
       ]
     }
+  }
+
+  // Synchronous Vision OCR. Vision's request is async-callback by default, so we
+  // wait on a semaphore — fine on the background queue Expo runs the
+  // AsyncFunction on.
+  private static func recognizeText(cgImage: CGImage, languages: [String]) -> String {
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    request.usesLanguageCorrection = true
+    if !languages.isEmpty {
+      request.recognitionLanguages = languages
+    }
+    let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+    do {
+      try handler.perform([request])
+    } catch {
+      return ""
+    }
+    let observations = request.results ?? []
+    let lines: [String] = observations.compactMap { obs in
+      obs.topCandidates(1).first?.string
+    }
+    return lines.joined(separator: "\n")
   }
 
   // Renders the page to a UIImage. Resolution caps the longer edge to keep

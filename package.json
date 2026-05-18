@@ -13,6 +13,10 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test:converters": "node tests/run-converters.mjs",
+    "test:unit": "node tests/run-unit.mjs",
+    "test:audit": "node tests/scripts/audit-gui-coverage.mjs",
+    "test:swift": "swift test --package-path modules/expo-media-convert",
+    "test:all": "pnpm test:unit && pnpm test:audit && pnpm test:converters && pnpm test:swift",
     "test:pdf": "swift tests/scripts/test-pdf.swift test-fixtures/pdf-image-only.pdf test-fixtures/pdf-text-multipage.pdf",
     "test:build-fixtures": "node tests/scripts/build-fixtures.mjs"
   },

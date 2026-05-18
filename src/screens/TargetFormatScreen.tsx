@@ -58,13 +58,28 @@ export function TargetFormatScreen() {
     );
   }
 
-  const pick = (ext: string, variant?: 'plain' | 'styled') =>
+  const pick = (
+    ext: string,
+    variant?: import('../types/conversion').ConversionVariant,
+  ) =>
     navigation.navigate('Options', { fileId: file.id, targetFormat: ext, variant });
 
   // DOCX → HTML supports two variants: "plain" (semantic) and "styled" (full
   // visual fidelity). Surface both as separate cards so the user picks once
   // here and doesn't see an extra option screen.
   const showDocxHtmlVariants = file.ext === 'docx';
+
+  // PDF sources additionally offer "tools" (compress, rotate, split, delete
+  // pages). These all stay PDF → PDF and route through pdfTools.ts.
+  const showPdfTools = file.ext === 'pdf';
+  const PDF_TOOLS: { label: string; variant: import('../types/conversion').ConversionVariant }[] = [
+    { label: 'PDF komprimieren', variant: 'compress' },
+    { label: '90° drehen', variant: 'rotate90' },
+    { label: '180° drehen', variant: 'rotate180' },
+    { label: '270° drehen', variant: 'rotate270' },
+    { label: 'Seiten löschen', variant: 'delete' },
+    { label: 'Seiten extrahieren', variant: 'split' },
+  ];
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]} edges={['top', 'left', 'right']}>
@@ -128,6 +143,25 @@ export function TargetFormatScreen() {
               {crossGroup.map((t) => (
                 <FormatChip key={t.ext} label={t.label} onPress={() => pick(t.ext)} />
               ))}
+            </View>
+          </Section>
+        ) : null}
+
+        {showPdfTools ? (
+          <Section title="PDF-Tools" textColor={c.textSec}>
+            <View style={styles.chipRow}>
+              {PDF_TOOLS.map((tool) => (
+                <FormatChip
+                  key={tool.variant}
+                  label={tool.label}
+                  onPress={() => pick('pdf', tool.variant)}
+                />
+              ))}
+              <FormatChip
+                key="ocr"
+                label="OCR → TXT"
+                onPress={() => pick('txt', 'ocr')}
+              />
             </View>
           </Section>
         ) : null}

@@ -1,6 +1,10 @@
 import { File } from 'expo-file-system';
 
-import { extractPdfText, type ExtractedPage } from '../../../modules/expo-pdf-text/src';
+import {
+  extractPdfText,
+  ocrPdfPages,
+  type ExtractedPage,
+} from '../../../modules/expo-pdf-text/src';
 import type { ConversionJob } from '../../types/conversion';
 
 const SUPPORTED_TARGETS = new Set(['txt', 'md', 'html', 'json']);
@@ -141,6 +145,19 @@ export async function convertPdf(
   job: ConversionJob,
   outputPath: string,
 ): Promise<{ uri: string; size: number }> {
+  // OCR path: render every page via Vision Framework instead of using the
+  // PDF's text layer. Used when the PDF is a scan or the user explicitly
+  // picks 'ocr' as the variant.
+  if (job.variant === 'ocr' && job.targetExt === 'txt') {
+    const ocr = await ocrPdfPages(job.source.uri);
+    const output = `${ocr.pages.map((p) => p.text).join('\n\n').trim()}\n`;
+    const dest = new File(outputPath);
+    if (dest.exists) dest.delete();
+    dest.create();
+    dest.write(output);
+    return { uri: dest.uri, size: dest.size };
+  }
+
   const wantsImages = job.targetExt === 'html' || job.targetExt === 'md';
   const { title, pageCount, pages } = await extractPdfText(job.source.uri, {
     renderImages: wantsImages,

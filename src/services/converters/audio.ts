@@ -1,14 +1,25 @@
 import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
 
-import { convertAudio as nativeConvertAudio } from '../../../modules/expo-media-convert/src';
-import type { ConversionJob } from '../../types/conversion';
+import {
+  convertAudio as nativeConvertAudio,
+  convertAudioWithBitrate as nativeConvertAudioWithBitrate,
+  transcodeAudio as nativeTranscodeAudio,
+  audioInfo as nativeAudioInfo,
+  type AudioInfo,
+  type AudioTranscodeOptions,
+} from '../../../modules/expo-media-convert/src';
+import type { AudioOptions, ConversionJob } from '../../types/conversion';
 
 const SUPPORTED_SOURCES = new Set(['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'opus', 'aiff', 'aif']);
 // AVFoundation on iOS can write these. MP3/FLAC/OGG/OPUS encoding is not in
 // iOS' built-in encoder set, so we deliberately don't advertise them.
 // Note: raw ADTS (.aac) isn't an AVFileType — AAC ships inside .m4a here.
 const SUPPORTED_TARGETS = new Set(['m4a', 'wav', 'aiff', 'caf']);
+// Targets where AVEncoderBitRateKey actually does something. PCM-based
+// containers ignore the bitrate setting.
+const COMPRESSED_TARGETS = new Set(['m4a']);
+const PCM_TARGETS = new Set(['wav', 'aiff', 'caf']);
 
 export function canHandle(sourceExt: string, targetExt: string): boolean {
   if (Platform.OS !== 'ios') return false;
@@ -21,17 +32,63 @@ export function audioSupportedTargets(sourceExt: string): string[] {
   return Array.from(SUPPORTED_TARGETS).filter((t) => t !== sourceExt);
 }
 
+export function audioBitrateApplies(targetExt: string): boolean {
+  return COMPRESSED_TARGETS.has(targetExt);
+}
+
+export function audioBitDepthApplies(targetExt: string): boolean {
+  return PCM_TARGETS.has(targetExt);
+}
+
+function hasAdvancedAudioOptions(opts?: AudioOptions): boolean {
+  if (!opts) return false;
+  return (
+    opts.sampleRate != null ||
+    opts.channels != null ||
+    opts.bitDepth != null ||
+    (opts.trimStartSec != null && opts.trimStartSec > 0) ||
+    opts.trimEndSec != null
+  );
+}
+
+function toTranscodeOptions(opts: AudioOptions, targetExt: string): AudioTranscodeOptions {
+  const out: AudioTranscodeOptions = {};
+  if (audioBitrateApplies(targetExt) && opts.bitrate != null) out.bitrateKbps = opts.bitrate;
+  if (opts.sampleRate != null) out.sampleRate = opts.sampleRate;
+  if (opts.channels != null) out.channels = opts.channels;
+  if (audioBitDepthApplies(targetExt) && opts.bitDepth != null) out.bitDepth = opts.bitDepth;
+  if (opts.trimStartSec != null) out.trimStartSec = opts.trimStartSec;
+  if (opts.trimEndSec != null) out.trimEndSec = opts.trimEndSec;
+  return out;
+}
+
 export async function convertAudio(
   job: ConversionJob,
   outputPath: string,
 ): Promise<{ uri: string; size: number }> {
   const dest = new File(outputPath);
   if (dest.exists) dest.delete();
-  const result = await nativeConvertAudio(
-    job.source.uri,
-    outputPath,
-    job.targetExt,
-    job.quality,
-  );
-  return result;
+
+  const opts = job.audioOptions;
+
+  // Full transcode path when sample-rate / channels / bit-depth / trim are set.
+  if (hasAdvancedAudioOptions(opts)) {
+    return nativeTranscodeAudio(
+      job.source.uri,
+      outputPath,
+      job.targetExt,
+      toTranscodeOptions(opts!, job.targetExt),
+    );
+  }
+
+  // Bitrate-only path (legacy).
+  const bitrate = opts?.bitrate;
+  if (bitrate && audioBitrateApplies(job.targetExt)) {
+    return nativeConvertAudioWithBitrate(job.source.uri, outputPath, job.targetExt, bitrate);
+  }
+  return nativeConvertAudio(job.source.uri, outputPath, job.targetExt, job.quality);
+}
+
+export function probeAudio(inputUri: string): Promise<AudioInfo> {
+  return nativeAudioInfo(inputUri);
 }
